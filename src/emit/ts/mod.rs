@@ -1,7 +1,4 @@
 //! TypeScript emit primitives.
-//!
-//! Parenthesization is decided by [`types::Position`] and indentation by
-//! [`writer::Writer`].
 
 pub(crate) mod decl;
 pub(crate) mod imports;

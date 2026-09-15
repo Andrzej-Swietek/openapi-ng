@@ -1,5 +1,5 @@
-//! Expands `{fieldName}`, `{arrayField[N]}` and `{capture.name}` in
-//! `Rule.from` and `Rule.format`, and nothing else.
+//! Expands `{fieldName}`, `{arrayField[N]}` and `{capture.name}` in `Rule.from` and
+//! `Rule.format`, and nothing else.
 
 use std::collections::HashMap;
 
@@ -66,8 +66,8 @@ fn resolve(
     .ok_or_else(|| TemplateError::Unbound(token.to_string()))
 }
 
-/// Splits `tags[-1]` into `("tags", "-1")`, or `None` when the token is not
-/// an indexed reference.
+/// Splits `tags[-1]` into `("tags", "-1")`, or `None` when the token is not an indexed
+/// reference.
 #[must_use]
 fn split_index(token: &str) -> Option<(&str, &str)> {
   let open = token.find('[')?;

@@ -19,8 +19,8 @@ use crate::plan::services::plan_request_contract;
 use super::collisions::{reject_artifact_path_collisions, reject_cross_group_path_collisions};
 use super::*;
 
-/// Resolves each mapped type against `model_symbols`, failing on the
-/// first `schema` the IR does not declare.
+/// Resolves each mapped type against `model_symbols`, failing on the first `schema` the IR does
+/// not declare.
 pub(crate) fn validate_mapped_types_against_schemas<'model>(
   model_symbols: &'model [ModelSymbol],
   mapped_types: &[MappedType],
@@ -114,8 +114,8 @@ fn plan_operation<'model>(
   })
 }
 
-/// Kebab-case stem for a group's files, rejecting a name that leaves none:
-/// the paths built from it would carry an empty segment.
+/// Kebab-case stem for a group's files, rejecting a name that leaves none: the paths built from
+/// it would carry an empty segment.
 fn group_file_stem(group_name: &str, reporter: &Reporter) -> Result<String, Diagnostic> {
   let stem = service_file_stem(group_name);
   if stem.is_empty() {
@@ -130,8 +130,8 @@ fn group_file_stem(group_name: &str, reporter: &Reporter) -> Result<String, Diag
   Ok(stem)
 }
 
-/// `rest/<group>/<method>.ts`, rejecting a method name the barrel cannot
-/// re-export or that names no file.
+/// `rest/<group>/<method>.ts`, rejecting a method name the barrel cannot re-export or that
+/// names no file.
 fn operation_artifact_path(
   operation: &crate::api_model::canonical::OperationDef,
   method_name: &MethodName,
@@ -162,8 +162,7 @@ fn operation_artifact_path(
   Ok(format!("rest/{file_stem}/{stem}.ts"))
 }
 
-/// True when the operation declares any path, query, header or body
-/// input.
+/// True when the operation declares any path, query, header or body input.
 #[must_use]
 const fn takes_input(request: &PlannedRequestContract<'_>) -> bool {
   !request.fields.is_empty() || request.body.is_some() || !request.headers.is_empty()

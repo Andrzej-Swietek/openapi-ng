@@ -19,8 +19,7 @@ enum Destination {
 }
 
 impl Destination {
-  /// The slot `location` names. `Ok(None)` is a `cookie`, which the
-  /// contract omits.
+  /// The slot `location` names.
   fn parse(
     location: &str,
     name: &str,
@@ -108,8 +107,8 @@ impl Parameter {
   }
 }
 
-/// Lowers an operation's parameters into its path/query inputs and its
-/// header list, each sorted by name.
+/// Lowers an operation's parameters into its path/query inputs and its header list, each sorted
+/// by name.
 pub(super) fn normalize_request_inputs(
   parameters: &[crate::parse::openapi_model::Parameter],
   operation_id: &str,
@@ -185,8 +184,7 @@ fn reject_unsupported_declaration(
   Ok(())
 }
 
-/// Normalizes a parameter's declared schema, rejecting a shape the position
-/// cannot carry.
+/// Normalizes a parameter's declared schema, rejecting a shape the position cannot carry.
 fn normalize_parameter_schema(
   parameter: &crate::parse::openapi_model::Parameter,
   context: LoweringContext<'_>,

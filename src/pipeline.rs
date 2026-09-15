@@ -25,8 +25,7 @@ pub struct GenerateResult {
   pub artifacts: Vec<GeneratedArtifact>,
 }
 
-/// The warnings recorded before a run failed, and the fatal that ended
-/// it.
+/// The warnings recorded before a run failed, and the fatal that ended it.
 #[derive(Debug)]
 pub struct GenerateFailure {
   pub warnings: Vec<Diagnostic>,
@@ -109,68 +108,70 @@ fn run_pipeline(
   // One banner per run, prefixed onto every artifact.
   let banner = render_generated_banner(summary.normalized_source_path.as_str());
 
-  // Canonical emit order: models → angular-rest support → per-tag
-  // services. `plan.services` is already class-name-sorted by
-  // `resolve_service_plans`, so artifact ordering is independent of
-  // operation insertion order.
-  let mut artifacts: Vec<GeneratedArtifact> = Vec::new();
-  if config.emit.contains(&EmitTarget::Models) && !ir.schemas.is_empty() {
-    let body = emit_model(&ir.schemas, &plan.mapped_types);
-    artifacts.push(GeneratedArtifact::new(
-      MODEL_ARTIFACT_PATH.to_string(),
-      format!("{banner}{body}"),
-    ));
-  }
-  if config.emit.contains(&EmitTarget::Angular) {
-    artifacts.push(GeneratedArtifact::new(
-      REST_MODEL_PATH.to_string(),
-      format!("{banner}{REST_MODEL_TEMPLATE}"),
-    ));
-    artifacts.push(GeneratedArtifact::new(
-      REST_UTIL_PATH.to_string(),
-      format!("{banner}{REST_UTIL_TEMPLATE}"),
-    ));
-    artifacts.push(GeneratedArtifact::new(
-      REST_VALIDATE_PATH.to_string(),
-      format!("{banner}{REST_VALIDATE_TEMPLATE}"),
-    ));
-    let standalone = config.layout.contains(&Layout::Operations);
-    let classes = config.layout.contains(&Layout::Services);
-    for service in &plan.services {
-      if standalone {
-        for operation in &service.operations {
+  // Emit order: models → angular support → services, which
+  // `resolve_service_plans` already sorted by class name.
+  let models = (config.emit.contains(&EmitTarget::Models) && !ir.schemas.is_empty()).then(|| {
+    (
+      MODEL_ARTIFACT_PATH,
+      emit_model(&ir.schemas, &plan.mapped_types),
+    )
+  });
+
+  let angular = config.emit.contains(&EmitTarget::Angular);
+  let standalone = angular && config.layout.contains(&Layout::Operations);
+  let classes = angular && config.layout.contains(&Layout::Services);
+
+  let support = angular
+    .then_some(
+      [
+        (REST_MODEL_PATH, REST_MODEL_TEMPLATE),
+        (REST_UTIL_PATH, REST_UTIL_TEMPLATE),
+        (REST_VALIDATE_PATH, REST_VALIDATE_TEMPLATE),
+      ]
+      .map(|(path, template)| (path, template.to_string())),
+    )
+    .into_iter()
+    .flatten();
+
+  let per_service = plan.services.iter().flat_map(|service| {
+    let operations = standalone
+      .then(|| {
+        service.operations.iter().map(|operation| {
           let path = operation
             .artifact_path
-            .clone()
+            .as_deref()
             .expect("operation artifact paths are planned for this layout");
-          let body = emit_operation(operation);
-          artifacts.push(GeneratedArtifact::new(path, format!("{banner}{body}")));
-        }
-        let barrel_path = service
-          .operations_barrel_path
-          .clone()
-          .expect("operations barrel is planned for this layout");
-        let barrel = emit_operations_barrel(service);
-        artifacts.push(GeneratedArtifact::new(
-          barrel_path,
-          format!("{banner}{barrel}"),
-        ));
-      }
-      if classes {
-        // With operation files present the class binds them instead of
-        // inlining its own builders.
-        let body = if standalone {
-          emit_bound_service(service)
-        } else {
-          emit_service(service)
-        };
-        artifacts.push(GeneratedArtifact::new(
-          service.artifact_path.clone(),
-          format!("{banner}{body}"),
-        ));
-      }
-    }
-  }
+          (path, emit_operation(operation))
+        })
+      })
+      .into_iter()
+      .flatten();
+    let barrel = standalone.then(|| {
+      let path = service
+        .operations_barrel_path
+        .as_deref()
+        .expect("operations barrel is planned for this layout");
+      (path, emit_operations_barrel(service))
+    });
+    // With operation files present the class binds them instead of
+    // inlining its own builders.
+    let class = classes.then(|| {
+      let body = if standalone {
+        emit_bound_service(service)
+      } else {
+        emit_service(service)
+      };
+      (service.artifact_path.as_str(), body)
+    });
+    operations.chain(barrel).chain(class)
+  });
+
+  let artifacts: Vec<GeneratedArtifact> = models
+    .into_iter()
+    .chain(support)
+    .chain(per_service)
+    .map(|(path, body)| GeneratedArtifact::new(path.to_string(), format!("{banner}{body}")))
+    .collect();
 
   crate::io::writer::write_generated_artifacts(
     config.output_path.as_deref(),

@@ -1,8 +1,4 @@
-//! Lowering of the NAPI-boundary `NamingOptions` into the internal
-//! [`NamingConfig`].
-//!
-//! The boundary has no sum type, so a `NamingValue` arrives as three
-//! exclusive optional fields. Every failure here is `E_INVALID_OPTION`.
+//! Lowering of the NAPI-boundary `NamingOptions` into the internal [`NamingConfig`].
 
 use crate::{
   bindings::{NamingOptions, NamingRuleEntry, NamingValue},
@@ -13,8 +9,7 @@ use crate::{
   },
 };
 
-/// Lowers the caller's naming options. Absent options yield the default
-/// config, where each key falls back to its hardcoded default.
+/// Lowers the caller's naming options.
 pub(crate) fn lower(
   options: Option<NamingOptions>,
   reporter: &Reporter,
@@ -28,8 +23,7 @@ pub(crate) fn lower(
   })
 }
 
-/// Lowers one key's value: a bare format string, a single rule, or a
-/// fallback chain of either.
+/// Lowers one key's value: a bare format string, a single rule, or a fallback chain of either.
 fn lower_value(
   value: Option<NamingValue>,
   key: &str,

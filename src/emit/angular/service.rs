@@ -12,9 +12,7 @@ use super::request::{
 
 #[must_use]
 pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
-  // Each operation produces ~512 bytes (request interface + factory
-  // triplet + URL/body construction); 2KB floor covers the @Injectable
-  // header + import block.
+  // ~512 bytes per operation, with a 2 KB floor for the preamble.
   let capacity = (service_plan.operations.len() * 512).max(2048);
   let mut buffer = Writer::with_capacity(capacity);
 
@@ -25,19 +23,15 @@ pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
   buffer.line("})");
   buffer.open_block(&format!("export class {}", service_plan.class_name));
 
-  for operation in &service_plan.operations {
+  service_plan.operations.iter().for_each(|operation| {
     buffer.blank_line();
     render_operation_property(&mut buffer, operation, operation.request_interface.as_ref());
-  }
+  });
 
   buffer.close_block("");
 
-  // Per-operation tail: for each operation, emit its `{Pascal}Params`
-  // interface (when the operation has any inputs) followed by its
-  // `{Pascal}Error` interface (when it declares any 4xx/5xx with a JSON
-  // schema). Per-operation grouping beats kind-grouping when the file
-  // grows long — a reader searching for "UpdatePet" finds the property,
-  // its params, and its error map contiguously.
+  // Grouped per operation, so a reader finds a property, its params and
+  // its error map contiguously.
   for operation in &service_plan.operations {
     let request_name = operation.request_interface.as_ref();
     let has_errors = !operation.errors.is_empty();
@@ -61,9 +55,9 @@ pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
   buffer.into_string()
 }
 
-/// Class for the `services` + `operations` layout: one `withInjector()` line per operation, plus type
-/// re-exports so `import type { ListPetsParams } from './rest/pet.rest'`
-/// resolves the same way it does under `services`.
+/// Class for the `services` + `operations` layout: one `withInjector()` line per operation,
+/// plus type re-exports so `import type { ListPetsParams } from './rest/pet.rest'` resolves the
+/// same way it does under `services`.
 #[must_use]
 pub(crate) fn emit_bound_service(service_plan: &ServicePlan<'_>) -> String {
   // The barrel `rest/<group>/index.ts` is imported by its directory.
@@ -144,9 +138,8 @@ fn render_operation_property(
   buffer.line(");");
 }
 
-// Helper call prefix: `factory` is `requestFactory` or `defineOperation`;
-// arity and response variant pick `.zeroArg` / `.blob` / `.text` /
-// `.arrayBuffer`, so the runtime never probes `reqFn.length`.
+// Arity and response variant pick the `.zeroArg` / `.blob` / `.text` /
+// `.arrayBuffer` suffix on `factory`.
 pub(super) fn write_call_site(
   buffer: &mut Writer,
   factory: &str,

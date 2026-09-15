@@ -40,10 +40,8 @@ fn token_len(token: &str) -> usize {
     .map_or(token.len(), |(((offset, _), _), _)| offset)
 }
 
-/// True when a token boundary falls immediately before `current`, which a
-/// run of alphanumerics reaches at two case transitions: after a lowercase
-/// or digit (`listPets`), and at the last uppercase of a run followed by a
-/// lowercase (`URLPath`).
+/// True at a token boundary: after a lowercase or digit (`listPets`), or at
+/// the last uppercase of a run before a lowercase (`URLPath`).
 #[must_use]
 fn splits_before(previous: char, current: char, following: Option<char>) -> bool {
   let starts_after_lower = previous.is_ascii_lowercase() || previous.is_ascii_digit();

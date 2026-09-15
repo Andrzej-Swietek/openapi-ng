@@ -46,8 +46,7 @@ pub(crate) struct RequestBodyDef {
   pub(crate) content: BodyContent,
 }
 
-/// An operation's request-body content. A form variant's `body_ref` names
-/// the source schema when the body was declared as a top-level `$ref`.
+/// An operation's request-body content.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum BodyContent {
   Json(SchemaType),
@@ -77,8 +76,7 @@ pub(crate) enum BodyFieldType {
   ArrayOfBinary,
 }
 
-/// The HTTP methods the generator supports. A spec declaring TRACE is
-/// rejected with its own diagnostic.
+/// The HTTP methods the generator supports.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum HttpMethod {
   Get,
@@ -147,26 +145,22 @@ pub(crate) struct OperationDef {
   pub(crate) path: String,
   pub(crate) request: RequestDef,
   pub(crate) response: Option<ResponseContent>,
-  /// The 4xx and 5xx responses that declare a JSON schema, by ascending
-  /// status. A schemaless or non-JSON error response is skipped.
+  /// The 4xx and 5xx responses that declare a JSON schema, by ascending status.
   pub(crate) errors: Vec<ErrorResponse>,
-  /// The OpenAPI Operation's `summary` and `description`, joined by a
-  /// blank line.
+  /// The OpenAPI Operation's `summary` and `description`, joined by a blank line.
   pub(crate) description: Option<String>,
   /// The source operation declared `deprecated: true`.
   pub(crate) deprecated: bool,
 }
 
-/// One response slot keyed by an explicit 4xx or 5xx status. `default`,
-/// 1xx and 3xx are excluded.
+/// One response slot keyed by an explicit 4xx or 5xx status.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ErrorResponse {
   pub(crate) status: u16,
   pub(crate) body: SchemaType,
 }
 
-/// An operation's success-response content. `Json(None)` is a JSON
-/// response that declares no schema.
+/// An operation's success-response content.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum ResponseContent {
   Json(Option<SchemaType>),

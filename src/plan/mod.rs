@@ -1,5 +1,5 @@
-//! Turns an `ApiModel` into the plan an emitter reads, and validates the
-//! caller's mapped types against it.
+//! Turns an `ApiModel` into the plan an emitter reads, and validates the caller's mapped types
+//! against it.
 
 pub(crate) mod artifact_plan;
 pub mod naming;
@@ -16,11 +16,8 @@ use artifact_plan::{
   ResolvedMappedType, ServicePlan, resolve_service_plans, validate_mapped_types_against_schemas,
 };
 
-/// Everything the emitters read: the IR's model symbols, the validated
-/// mapped-type list, and the per-group Angular service plans.
-///
-/// `services` is empty when Angular is not among the selected targets, and
-/// `mapped_types` is empty when the caller declared none.
+/// Everything the emitters read: the IR's model symbols, the validated mapped-type list, and
+/// the per-group Angular service plans.
 pub(crate) struct GenerationPlan<'model> {
   pub(crate) mapped_types: Vec<ResolvedMappedType<'model>>,
   pub(crate) services: Vec<ServicePlan<'model>>,

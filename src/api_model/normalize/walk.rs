@@ -1,13 +1,11 @@
-//! Position of a schema walk: breadcrumb, nesting depth and diagnostic
-//! sink, carried as one value.
+//! Position of a schema walk: breadcrumb, nesting depth and diagnostic sink, carried as one
+//! value.
 
 use crate::error::{Context, Diagnostic, Reporter};
 
 use super::{MAX_NORMALIZE_DEPTH, unsupported_rule};
 
-/// One position in a schema tree; every constructor but
-/// [`SchemaWalk::root`] descends a level. Call
-/// [`SchemaWalk::check_depth`] before recursing.
+/// One position in a schema tree; every constructor but [`SchemaWalk::root`] descends a level.
 #[derive(Clone, Copy)]
 pub(crate) struct SchemaWalk<'a> {
   context: Context<'a>,
@@ -16,8 +14,7 @@ pub(crate) struct SchemaWalk<'a> {
 }
 
 impl<'a> SchemaWalk<'a> {
-  /// Starts a walk at a top-level schema, parameter, request body or
-  /// response.
+  /// Starts a walk at a top-level schema, parameter, request body or response.
   #[must_use]
   pub(crate) const fn root(context: Context<'a>, reporter: &'a Reporter) -> Self {
     Self {
@@ -53,8 +50,7 @@ impl<'a> SchemaWalk<'a> {
     })
   }
 
-  /// Descends into an array's item schema, which shares the array's
-  /// breadcrumb.
+  /// Descends into an array's item schema, which shares the array's breadcrumb.
   #[must_use]
   pub(crate) const fn item(&self) -> Self {
     Self {
@@ -74,7 +70,6 @@ impl<'a> SchemaWalk<'a> {
   }
 
   /// The breadcrumb for this position, for use in a diagnostic message.
-  /// Allocates, so call it only while building one.
   #[must_use]
   pub(crate) fn here(&self) -> String {
     self.context.render()

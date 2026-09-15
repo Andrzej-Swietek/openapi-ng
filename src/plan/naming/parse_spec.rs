@@ -1,5 +1,4 @@
-//! A caller's `parse` regex, compiled once so evaluating a rule is a
-//! `captures` call.
+//! A caller's `parse` regex, compiled once so evaluating a rule is a `captures` call.
 
 use regex::{Regex, RegexBuilder};
 
@@ -16,9 +15,6 @@ pub(crate) enum CompileError {
 }
 
 /// Compiles a `parse` regex, accepting the flags `i`, `m` and `s`.
-///
-/// Every other flag fails, `g`, `y` and `u` included: Rust's engine has
-/// no equivalent, and ignoring one would silently change the match.
 pub(crate) fn compile(source: &str, flags: &str) -> Result<CompiledParseSpec, CompileError> {
   let builder = flags
     .chars()

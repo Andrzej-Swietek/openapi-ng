@@ -1,8 +1,6 @@
 use std::path::{Path, PathBuf};
 
 /// Working directory of the host process that invoked the generator.
-/// Native builds ask the OS. WASI has no host cwd, but the Node loader
-/// passes `process.env` through, so `PWD` carries it there.
 #[cfg(not(target_os = "wasi"))]
 #[must_use]
 pub(crate) fn host_cwd() -> Option<PathBuf> {
@@ -16,7 +14,6 @@ pub(crate) fn host_cwd() -> Option<PathBuf> {
 }
 
 /// Join a relative path onto the host cwd; absolute paths pass through.
-/// Without a known cwd the path is returned unchanged.
 #[must_use]
 pub(crate) fn resolve_against_host_cwd(path: &Path) -> PathBuf {
   if path.is_absolute() {

@@ -10,27 +10,53 @@ use crate::{
 
 use super::{GenerateConfig, MappedType, ResponseTypeMapping};
 
-/// The caller's options, validated and resolved: `emit` gains the targets
-/// it implies, `naming` is lowered.
+/// The caller's options, validated and resolved: `emit` gains the targets it
+/// implies, `naming` is lowered.
 pub(crate) fn resolve_generate_config(
   mut config: GenerateConfig,
   reporter: &Reporter,
 ) -> Result<GenerateConfig, Diagnostic> {
-  match (config.input_path.is_some(), config.input_contents.is_some()) {
-    (true, true) | (false, false) => {
-      return Err(reporter.error(
-        DiagnosticCode::InvalidOption,
-        "Must set exactly one of inputPath or inputContents.",
-      ));
-    }
-    _ => {}
+  CHECKS
+    .iter()
+    .try_for_each(|check| check(&config, reporter))?;
+
+  config.emit = resolve_emit_targets(config.emit, reporter)?;
+  config.naming = crate::plan::naming::lower(config.naming_options.take(), reporter)?;
+  Ok(config)
+}
+
+/// Every check that reads the config without changing it.
+type Check = fn(&GenerateConfig, &Reporter) -> Result<(), Diagnostic>;
+const CHECKS: [Check; 6] = [
+  check_input_source,
+  check_display_path,
+  check_input_format,
+  check_output_path,
+  validate_layout,
+  check_mapped_types,
+];
+
+fn check_input_source(config: &GenerateConfig, reporter: &Reporter) -> Result<(), Diagnostic> {
+  if config.input_path.is_some() == config.input_contents.is_some() {
+    return Err(reporter.error(
+      DiagnosticCode::InvalidOption,
+      "Must set exactly one of inputPath or inputContents.",
+    ));
   }
+  Ok(())
+}
+
+fn check_display_path(config: &GenerateConfig, reporter: &Reporter) -> Result<(), Diagnostic> {
   if config.input_contents.is_some() && config.display_path.is_none() {
     return Err(reporter.error(
       DiagnosticCode::InvalidOption,
       "displayPath is required when inputContents is set.",
     ));
   }
+  Ok(())
+}
+
+fn check_input_format(config: &GenerateConfig, reporter: &Reporter) -> Result<(), Diagnostic> {
   if config.input_format.is_some() && config.input_path.is_some() {
     return Err(reporter.error(
       DiagnosticCode::InvalidOption,
@@ -38,21 +64,23 @@ pub(crate) fn resolve_generate_config(
        remove it or switch to inputContents.",
     ));
   }
+  Ok(())
+}
 
-  config.emit = resolve_emit_targets(config.emit, reporter)?;
-  validate_layout(&config, reporter)?;
-  validate_mapped_types(&config.mapped_types, reporter)?;
-  validate_response_type_mapping(&config.response_type_mapping, reporter)?;
-  config.naming = crate::plan::naming::lower(config.naming_options.take(), reporter)?;
-
-  // Omitted means in-memory; an empty string is neither.
+/// Omitted means in-memory; an empty string is neither.
+fn check_output_path(config: &GenerateConfig, reporter: &Reporter) -> Result<(), Diagnostic> {
   if matches!(config.output_path.as_deref(), Some("")) {
     return Err(reporter.error(
       DiagnosticCode::InvalidOption,
       "outputPath must be a non-empty path. Omit the field (or pass undefined) to generate in-memory.",
     ));
   }
-  Ok(config)
+  Ok(())
+}
+
+fn check_mapped_types(config: &GenerateConfig, reporter: &Reporter) -> Result<(), Diagnostic> {
+  validate_mapped_types(&config.mapped_types, reporter)?;
+  validate_response_type_mapping(&config.response_type_mapping, reporter)
 }
 
 /// Adds the targets `emit` implies, warning once when it does.

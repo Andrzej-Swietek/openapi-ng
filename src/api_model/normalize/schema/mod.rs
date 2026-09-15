@@ -1,6 +1,5 @@
-//! OpenAPI schema to canonical `SchemaType`, entered through
-//! [`normalize_schemas`], [`normalize_schema`] and
-//! [`normalize_properties`].
+//! OpenAPI schema to canonical `SchemaType`, entered through [`normalize_schemas`],
+//! [`normalize_schema`] and [`normalize_properties`].
 
 mod composition;
 mod enums;

@@ -2,13 +2,12 @@
 
 use crate::plan::naming::{case::apply as apply_case, config::Case, context::OperationContext};
 
-/// The method name has no source: neither an `operationId` nor a usable
-/// path segment.
+/// The method name has no source: neither an `operationId` nor a usable path segment.
 #[derive(Debug)]
 pub(crate) struct NoMethodNameSource;
 
-/// camelCase of `operationId`; failing that, camelCase of the method joined
-/// with the path segments.
+/// camelCase of `operationId`; failing that, camelCase of the method joined with the path
+/// segments.
 pub(crate) fn default_method_name(
   ctx: &OperationContext<'_>,
 ) -> Result<String, NoMethodNameSource> {
@@ -25,8 +24,8 @@ pub(crate) fn default_method_name(
   ))
 }
 
-/// PascalCase of the first tag; failing that, of the first path segment;
-/// failing that, `Default`.
+/// PascalCase of the first tag; failing that, of the first path segment; failing that,
+/// `Default`.
 #[must_use]
 pub(crate) fn default_group(ctx: &OperationContext<'_>) -> String {
   // Tags are copied from the spec unfiltered, so an empty one must fall

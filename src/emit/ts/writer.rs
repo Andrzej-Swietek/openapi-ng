@@ -1,7 +1,6 @@
 //! The output buffer every emitter writes through.
 
-/// Indent-aware string writer; consecutive [`Writer::push`] calls share
-/// one indent prefix.
+/// Indent-aware string writer; consecutive [`Writer::push`] calls share one indent prefix.
 #[derive(Debug, Default)]
 pub(crate) struct Writer {
   buf: String,
@@ -63,8 +62,7 @@ impl Writer {
     }
   }
 
-  /// Appends formatted text. Prefer the `w!` / `wln!` macros at call
-  /// sites.
+  /// Appends formatted text.
   pub(crate) fn put(&mut self, args: std::fmt::Arguments<'_>) {
     // A format string with no arguments is already a `&str`; only an
     // interpolated one needs the intermediate allocation.
@@ -86,7 +84,6 @@ impl Writer {
   }
 
   /// Ends the current line and leaves exactly one blank line behind.
-  /// Collapses repeats, and does nothing at the start of the buffer.
   pub(crate) fn blank_line(&mut self) {
     if self.buf.is_empty() || self.last_was_blank {
       return;
@@ -99,8 +96,7 @@ impl Writer {
     self.last_was_blank = true;
   }
 
-  /// Writes `header` followed by ` {`, then indents. Pass an empty header
-  /// for a bare `{`.
+  /// Writes `header` followed by ` {`, then indents.
   pub(crate) fn open_block(&mut self, header: &str) {
     if header.is_empty() {
       self.line("{");
@@ -112,8 +108,7 @@ impl Writer {
     self.indent();
   }
 
-  /// Writes an inline `{ … }`, indenting whatever `members` writes. Leaves
-  /// the closing brace unterminated, for a type position.
+  /// Writes an inline `{ … }`, indenting whatever `members` writes.
   pub(crate) fn inline_block(&mut self, members: impl FnOnce(&mut Self)) {
     self.push("{\n");
     self.indent();

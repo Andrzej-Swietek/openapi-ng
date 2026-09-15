@@ -12,10 +12,7 @@ use crate::{
   },
 };
 
-/// Reads and decodes the file at `input_path`, failing when it exceeds
-/// the input byte cap.
-///
-/// Every diagnostic raised carries `display_path`.
+/// Reads and decodes the file at `input_path`, failing when it exceeds the input byte cap.
 pub(crate) fn read_and_decode(
   input_path: &str,
   display_path: &Rc<str>,
@@ -61,8 +58,7 @@ pub(crate) fn decode_openapi_input(
   decode_openapi_input_with_hint(path, source, display_path, None)
 }
 
-/// Decodes a spec supplied as source text, failing when it exceeds the
-/// input byte cap. Without a `hint` the format is sniffed.
+/// Decodes a spec supplied as source text, failing when it exceeds the input byte cap.
 pub(crate) fn decode_input_contents(
   source: &str,
   hint: Option<InputFormat>,
@@ -131,9 +127,7 @@ pub(crate) fn decode_openapi_input_with_hint(
   }
 }
 
-/// Decodes YAML into an `OpenApiDocument`. Repeated mapping keys are
-/// rejected by the model's `UniqueMap` fields. The anchor-expansion
-/// guard runs only when the source contains `&`.
+/// Decodes YAML into an `OpenApiDocument`.
 fn decode_yaml(source: &str, display_path: &Rc<str>) -> Result<OpenApiDocument, Diagnostic> {
   if source.contains('&') {
     check_anchor_expansion(source, display_path)?;
@@ -142,9 +136,7 @@ fn decode_yaml(source: &str, display_path: &Rc<str>) -> Result<OpenApiDocument, 
   serde_yml::from_str(source).map_err(|error| decode_failure(&error.to_string(), display_path))
 }
 
-/// Projects a `serde_yml` decode error onto a diagnostic. A duplicate key
-/// under `components.schemas` carries the `duplicate-schema-name` subcode so
-/// consumers can route on it; anything else is a plain decode failure.
+/// Projects a `serde_yml` decode error onto a diagnostic.
 #[must_use]
 fn decode_failure(message: &str, display_path: &Rc<str>) -> Diagnostic {
   if message.contains(DUPLICATE_KEY) && message.contains(SCHEMAS_FIELD_PATH) {
@@ -164,17 +156,11 @@ fn decode_failure(message: &str, display_path: &Rc<str>) -> Diagnostic {
   )
 }
 
-/// Field path `serde_yml` prefixes onto an error raised on the
-/// `components.schemas` map itself. The trailing `: ` keeps a nested path
-/// such as `components.schemas.Pet.properties` out.
+/// Field path `serde_yml` prefixes onto an error raised on the `components.schemas` map itself.
 const SCHEMAS_FIELD_PATH: &str = "components.schemas: ";
 
-/// Rejects a source whose YAML aliases expand far beyond its own size,
-/// measured by re-serialising the node tree.
-///
-/// A duplicate mapping key fails here: `Value` rejects one where the typed
-/// parse accepts it last-wins inside its `serde_json::Value` fields. Any
-/// other parse error passes, leaving the typed parse to report it.
+/// Rejects a source whose YAML aliases expand far beyond its own size, measured by re-
+/// serialising the node tree.
 fn check_anchor_expansion(source: &str, display_path: &Rc<str>) -> Result<(), Diagnostic> {
   let value = match serde_yml::from_str::<serde_yml::Value>(source) {
     Ok(value) => value,

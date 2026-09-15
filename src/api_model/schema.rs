@@ -23,8 +23,7 @@ pub(crate) enum SchemaType {
     values: Vec<String>,
   },
   Ref(Box<str>),
-  /// `oneOf`/`anyOf`. `discriminator` is set only for a discriminated
-  /// `oneOf`; `semantic::discriminator::narrow` consumes it.
+  /// `oneOf`/`anyOf`.
   Union {
     members: Vec<SchemaType>,
     discriminator: Option<Discriminator>,
@@ -33,14 +32,12 @@ pub(crate) enum SchemaType {
   InlineObject {
     properties: Vec<SchemaProperty>,
   },
-  /// Wraps any other variant; renders as ` | null`. The only
-  /// representation of nullability in the IR.
+  /// Wraps any other variant; renders as ` | null`.
   Nullable(Box<SchemaType>),
 }
 
-/// `mapping` holds wire value → bare schema name; `#/components/schemas/X`
-/// refs are reduced to bare names when the IR is built. Empty when the
-/// spec omits `mapping`, and `schema_name.to_ascii_lowercase()` applies.
+/// `mapping` holds wire value → bare schema name; `#/components/schemas/X` refs are reduced to
+/// bare names when the IR is built.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Discriminator {
   pub(crate) property_name: Box<str>,

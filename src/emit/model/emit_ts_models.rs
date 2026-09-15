@@ -98,17 +98,14 @@ fn native_binding<'a>(mapped: &'a ResolvedMappedType<'_>) -> &'a str {
     .unwrap_or_else(|| mapped.type_name.as_ref())
 }
 
-/// True when the binding a mapped type introduces already equals the
-/// schema name it replaces. The usual `import type { Y as X }` plus
-/// `export type X = X;` would collide on `X`, so the pair collapses to a
-/// single re-export.
+/// True when the binding a mapped type introduces already equals the schema name it replaces.
 #[must_use]
 fn is_self_alias(mapped: &ResolvedMappedType<'_>) -> bool {
   native_binding(mapped) == mapped.schema
 }
 
-/// Emits the mapped types' import block: regular imports first, grouped by
-/// path, then the re-exports.
+/// Emits the mapped types' import block: regular imports first, grouped by path, then the re-
+/// exports.
 fn emit_mapped_imports(mapped_types: &[ResolvedMappedType<'_>], out: &mut Writer) {
   let (self_aliased, aliased): (Vec<_>, Vec<_>) = mapped_types
     .iter()

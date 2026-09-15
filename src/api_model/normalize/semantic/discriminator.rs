@@ -1,5 +1,5 @@
-//! Narrows each discriminated union member's discriminator property to the
-//! single literal that selects it.
+//! Narrows each discriminated union member's discriminator property to the single literal that
+//! selects it.
 
 use std::collections::BTreeMap;
 
@@ -51,8 +51,7 @@ fn collect_narrowings(symbols: &[ModelSymbol]) -> Narrowings {
     )
 }
 
-/// The wire value a `mapping` entry gives this member, or its lowercased
-/// schema name.
+/// The wire value a `mapping` entry gives this member, or its lowercased schema name.
 #[must_use]
 fn wire_value(discriminator: &Discriminator, schema_name: &str) -> Box<str> {
   discriminator
@@ -113,8 +112,8 @@ fn validate_discriminator_property(
   Ok(())
 }
 
-/// Only inline objects are mutated; a `Ref` member is narrowed when this
-/// reaches the symbol it names.
+/// Only inline objects are mutated; a `Ref` member is narrowed when this reaches the symbol it
+/// names.
 fn apply_narrowings(symbols: &mut [ModelSymbol], narrowings: &Narrowings) {
   symbols.iter_mut().for_each(|symbol| {
     let Some(names) = narrowings.get(&symbol.name) else {
@@ -126,8 +125,8 @@ fn apply_narrowings(symbols: &mut [ModelSymbol], narrowings: &Narrowings) {
   });
 }
 
-/// Finds a property by name through the shapes that can carry one: an
-/// inline object, an `allOf` part, a `$ref` target, or a nullable wrapper.
+/// Finds a property by name through the shapes that can carry one: an inline object, an `allOf`
+/// part, a `$ref` target, or a nullable wrapper.
 #[must_use]
 fn find_property<'a>(
   body: &'a SchemaType,
@@ -149,8 +148,8 @@ fn find_property<'a>(
   }
 }
 
-/// True for the property types a discriminator may declare: bare `string`
-/// or a string-literal enum.
+/// True for the property types a discriminator may declare: bare `string` or a string-literal
+/// enum.
 #[must_use]
 const fn is_string_discriminator_shape(schema: &SchemaType) -> bool {
   matches!(
@@ -159,8 +158,8 @@ const fn is_string_discriminator_shape(schema: &SchemaType) -> bool {
   )
 }
 
-/// Narrows the named property to a single literal, reporting whether it
-/// was found; one reachable only through a `$ref` keeps its `string` type.
+/// Narrows the named property to a single literal, reporting whether it was found; one
+/// reachable only through a `$ref` keeps its `string` type.
 fn narrow_property_in_body(body: &mut SchemaType, name: &str, literal_value: &str) -> bool {
   match body {
     SchemaType::InlineObject { properties } => {

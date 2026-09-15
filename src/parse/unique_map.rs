@@ -1,7 +1,4 @@
 //! Duplicate-rejecting map deserializers.
-//!
-//! YAML and JSON both permit a repeated mapping key, which `BTreeMap` and
-//! `IndexMap` resolve by keeping the last occurrence.
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -15,8 +12,7 @@ use serde::de::{Deserialize, Deserializer, Error as _, MapAccess, Visitor};
 pub(crate) trait InsertUnique {
   type Value;
 
-  /// Inserts `value` under `key`. Returns `false` and leaves the collection
-  /// unchanged when `key` was already present.
+  /// Inserts `value` under `key`.
   fn insert_unique(&mut self, key: String, value: Self::Value) -> bool;
 }
 
@@ -49,7 +45,6 @@ impl<V> InsertUnique for IndexMap<String, V> {
 }
 
 /// Wraps a keyed collection so deserializing it rejects a repeated key.
-/// Derefs to the wrapped collection.
 #[derive(Debug, Default)]
 #[cfg_attr(test, derive(Clone))]
 pub(crate) struct Unique<M>(M);
@@ -57,12 +52,12 @@ pub(crate) struct Unique<M>(M);
 /// `BTreeMap` that rejects a repeated key at decode time.
 pub(crate) type UniqueMap<V> = Unique<BTreeMap<String, V>>;
 
-/// `IndexMap` that rejects a repeated key at decode time, preserving the
-/// spec author's declaration order.
+/// `IndexMap` that rejects a repeated key at decode time, preserving the spec author's
+/// declaration order.
 pub(crate) type UniqueIndexMap<V> = Unique<IndexMap<String, V>>;
 
-/// Total: a built `BTreeMap` or `IndexMap` holds no repeated key, so only
-/// deserialization can encounter one.
+/// Total: a built `BTreeMap` or `IndexMap` holds no repeated key, so only deserialization can
+/// encounter one.
 impl<M> From<M> for Unique<M> {
   fn from(map: M) -> Self {
     Self(map)

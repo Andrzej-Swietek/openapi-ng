@@ -6,8 +6,8 @@ use crate::subcode;
 
 use super::super::bail_unsupported;
 
-/// Fails when `path`'s braces are unbalanced or nested, or when a
-/// placeholder wraps a name that is not a bare identifier.
+/// Fails when `path`'s braces are unbalanced or nested, or when a placeholder wraps a name that
+/// is not a bare identifier.
 pub(super) fn validate_path_template(path: &str, reporter: &Reporter) -> Result<(), Diagnostic> {
   let mut rest = path;
   while let Some(open) = rest.find('{') {

@@ -1,5 +1,5 @@
-//! `oneOf` / `anyOf` / `allOf` lowering, and the discriminator carried by a
-//! discriminated `oneOf`.
+//! `oneOf` / `anyOf` / `allOf` lowering, and the discriminator carried by a discriminated
+//! `oneOf`.
 
 use std::collections::BTreeMap;
 
@@ -10,8 +10,7 @@ use crate::parse::openapi_model::{self, Schema};
 use super::super::{SchemaWalk, bail_unsupported};
 use super::{normalize_reference, normalize_schema};
 
-/// Lowers whichever composition keyword `schema` declares, or `None` when it
-/// declares none. Rejects a schema that mixes two of them.
+/// Lowers whichever composition keyword `schema` declares, or `None` when it declares none.
 pub(super) fn normalize_composition(
   schema: &Schema,
   walk: SchemaWalk<'_>,
@@ -95,10 +94,6 @@ fn normalize_entries(
 }
 
 /// Resolves every `mapping` value to a bare schema name.
-///
-/// A value is either a bare name (`Cat`) or a full ref
-/// (`#/components/schemas/Cat`); one containing `/` is resolved through
-/// [`normalize_reference`] and fails on the shapes that rejects.
 fn resolve_discriminator(
   declared: &openapi_model::Discriminator,
   walk: SchemaWalk<'_>,

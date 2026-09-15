@@ -1,5 +1,4 @@
-//! The read-only values a naming rule's template can reference for one
-//! operation.
+//! The read-only values a naming rule's template can reference for one operation.
 
 use std::collections::BTreeMap;
 
@@ -11,12 +10,10 @@ pub(crate) struct OperationContext<'a> {
   /// Lower-case method name, as the spec writes it.
   method: &'static str,
   path: &'a str,
-  /// Path split on `/`, empty segments dropped, `{name}` unwrapped to
-  /// `name`.
+  /// Path split on `/`, empty segments dropped, `{name}` unwrapped to `name`.
   path_segments: Vec<&'a str>,
   tags: &'a [String],
-  /// `x-<name>` vendor extensions. Empty, since `OperationDef` does not
-  /// carry them: an `{x-foo}` reference stays unbound.
+  /// `x-<name>` vendor extensions.
   extensions: BTreeMap<String, String>,
 }
 
@@ -33,8 +30,7 @@ impl<'a> OperationContext<'a> {
     }
   }
 
-  /// Looks up a bare field name. `None` means unbound, which the caller
-  /// turns into a rule failure.
+  /// Looks up a bare field name.
   #[must_use]
   pub(crate) fn lookup(&self, name: &str) -> Option<&str> {
     match name {
@@ -46,8 +42,7 @@ impl<'a> OperationContext<'a> {
     }
   }
 
-  /// Looks up an array element: `pathSegments[0]`, `tags[-1]`. A negative
-  /// index counts from the tail; out of bounds is unbound.
+  /// Looks up an array element: `pathSegments[0]`, `tags[-1]`.
   #[must_use]
   pub(crate) fn lookup_indexed(&self, array: &str, index: i32) -> Option<&str> {
     match array {

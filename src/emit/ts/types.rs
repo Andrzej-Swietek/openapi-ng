@@ -6,18 +6,15 @@ use crate::api_model::schema::{SchemaProperty, SchemaScalar, SchemaType};
 use super::literal::safe_property_name;
 use super::writer::{Writer, write_separated};
 
-/// Syntactic position of a rendered type, which decides whether a composite
-/// needs parentheses so the surrounding operator binds correctly.
+/// Syntactic position of a rendered type, which decides whether a composite needs parentheses
+/// so the surrounding operator binds correctly.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Position {
-  /// A type-alias right-hand side, a property type, a generic argument —
-  /// nothing binds tighter, so nothing is parenthesized.
+  /// A type-alias right-hand side, a property type, a generic argument — nothing binds tighter,
+  /// so nothing is parenthesized.
   Standalone,
-  /// A composition member (`A | B`, `A & B`) or an array element (`X[]`),
-  /// where a composite child must be parenthesized.
-  ///
-  /// An inline object never needs it: both `A & { x: T }` and `{ x: T }[]`
-  /// parse unambiguously.
+  /// A composition member (`A | B`, `A & B`) or an array element (`X[]`), where a composite
+  /// child must be parenthesized.
   Wrapped,
 }
 
@@ -40,9 +37,7 @@ impl Render for SchemaType {
 }
 
 impl Render for BodyFieldType {
-  /// Binary parts surface as `Blob | File`, the union
-  /// `FormData.append` accepts. Arrays of binary keep the parentheses so
-  /// `(Blob | File)[]` does not read as `Blob | File[]`.
+  /// Binary parts surface as `Blob | File`, the union `FormData.append` accepts.
   fn render(&self, out: &mut Writer, _at: Position) {
     match self {
       Self::Scalar(scalar) => out.push(scalar_keyword(scalar)),
@@ -111,8 +106,8 @@ impl SchemaType {
   }
 }
 
-/// Appends `name`, its optional marker, and its type as an interface member
-/// — without the trailing `;`.
+/// Appends `name`, its optional marker, and its type as an interface member — without the
+/// trailing `;`.
 fn property_declaration(out: &mut Writer, name: &str, optional: bool, type_expr: &impl Render) {
   out.push(&safe_property_name(name));
   if optional {

@@ -1,5 +1,5 @@
-//! `multipart/form-data` and `application/x-www-form-urlencoded` body
-//! lowering: a flat, statically enumerated field list.
+//! `multipart/form-data` and `application/x-www-form-urlencoded` body lowering: a flat,
+//! statically enumerated field list.
 
 mod fields;
 
@@ -17,8 +17,8 @@ use crate::parse::openapi_model::{AdditionalProperties, MediaType, Schema};
 use super::super::schema::normalize_schema;
 use super::super::{SchemaWalk, unsupported};
 
-/// The form flavour, the operation position and the diagnostic sink every
-/// rejection message needs.
+/// The form flavour, the operation position and the diagnostic sink every rejection message
+/// needs.
 #[derive(Clone, Copy)]
 pub(super) struct FormBody<'a> {
   kind: FormKind,
@@ -51,8 +51,7 @@ pub(super) enum FormKind {
   UrlEncoded,
 }
 
-/// Why a form body or one of its fields was rejected. Paired with a
-/// [`FormKind`] it names the stable subcode consumers route on.
+/// Why a form body or one of its fields was rejected.
 #[derive(Clone, Copy)]
 pub(super) enum Reject {
   /// The declared body schema does not resolve to an object.
@@ -61,8 +60,8 @@ pub(super) enum Reject {
   OpenSchema,
   /// A field's type is an object.
   NestedObject,
-  /// A field's type is a composition, a map, a nullable, or an array of
-  /// something other than a scalar or binary.
+  /// A field's type is a composition, a map, a nullable, or an array of something other than a
+  /// scalar or binary.
   ComposedField,
 }
 
@@ -98,8 +97,7 @@ const BINARY: &str = "binary";
 /// Subcode for a binary field in a urlencoded body, scalar or array.
 const URLENCODED_BINARY_FIELD: &str = subcode::URLENCODED_BINARY_FIELD;
 
-/// A form body's fields, sorted by name. The returned name is `Some` for a
-/// top-level `$ref`; `format: binary` is read from an inline body only.
+/// A form body's fields, sorted by name.
 pub(super) fn normalize_form_body_fields(
   media: &MediaType,
   body: FormBody<'_>,
@@ -164,8 +162,7 @@ fn declared_schema<'a>(media: &'a MediaType, body: FormBody<'_>) -> Result<&'a S
   })
 }
 
-/// Only `additionalProperties: false` and its absence leave the field set
-/// closed.
+/// Only `additionalProperties: false` and its absence leave the field set closed.
 fn reject_open_schema(raw_schema: &Schema, body: FormBody<'_>) -> Result<(), Diagnostic> {
   if let Some(additional) = &raw_schema.additional_properties
     && !matches!(additional, AdditionalProperties::Boolean(false))

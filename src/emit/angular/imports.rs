@@ -5,8 +5,7 @@ use crate::api_model::schema::{SchemaType, collect_type_references};
 use crate::emit::ts::{Writer, type_import_block, wln};
 use crate::plan::artifact_plan::{PlannedOperation, PlannedRequestBody, RequestFieldKind};
 
-/// Path from a generated service file to the sibling `model.ts`, one
-/// directory above it.
+/// Path from a generated service file to the sibling `model.ts`, one directory above it.
 const MODEL_IMPORT_PATH: &str = "../model";
 
 pub(super) fn render_service_imports(
@@ -63,8 +62,7 @@ pub(super) fn collect_model_type_imports<'a>(
     })
 }
 
-/// Every model type an operation names. A form body and a non-JSON
-/// response name none.
+/// Every model type an operation names.
 fn operation_types<'a>(
   operation: &'a PlannedOperation<'a>,
 ) -> impl Iterator<Item = &'a SchemaType> {

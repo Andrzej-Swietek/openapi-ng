@@ -57,10 +57,7 @@ pub(super) fn normalize_success_response(
   }))
 }
 
-/// Collects the 4xx and 5xx responses that declare a JSON schema, sorted
-/// by status ascending.
-///
-/// Skips a schemaless response, a non-JSON one, and the `default` key.
+/// Collects the 4xx and 5xx responses that declare a JSON schema, sorted by status ascending.
 pub(super) fn normalize_error_responses(
   responses: Option<&BTreeMap<String, Response>>,
   context: LoweringContext<'_>,
@@ -99,8 +96,7 @@ pub(super) fn normalize_error_responses(
   Ok(errors)
 }
 
-/// Parses a response key as a 4xx or 5xx HTTP status code. Returns `None`
-/// for 2xx, 1xx, 3xx, the `default` key, and malformed values.
+/// Parses a response key as a 4xx or 5xx HTTP status code.
 #[must_use]
 fn parse_error_status(status: &str) -> Option<u16> {
   if status.len() != 3 {
@@ -113,26 +109,19 @@ fn parse_error_status(status: &str) -> Option<u16> {
   status.parse::<u16>().ok()
 }
 
-/// Picks the media entry carrying a response's typed body: the first that
-/// does not classify as `Blob`, else the first `Blob`.
-///
-/// Determinism comes from `BTreeMap` iterating alphabetically by key.
+/// Picks the media entry carrying a response's typed body: the first that does not classify as
+/// `Blob`, else the first `Blob`.
 #[must_use]
 fn pick_response_media<'a>(
   content: &'a BTreeMap<String, MediaType>,
   user_mapping: &[ResponseTypeMapping],
 ) -> Option<(&'a str, &'a MediaType)> {
-  let mut first_blob: Option<(&str, &MediaType)> = None;
-  for (mime, media) in content {
-    let kind = classify_response_kind(mime, user_mapping);
-    if kind != ResponseKind::Blob {
-      return Some((mime.as_str(), media));
-    }
-    if first_blob.is_none() {
-      first_blob = Some((mime.as_str(), media));
-    }
-  }
-  first_blob
+  let typed = content
+    .iter()
+    .find(|(mime, _)| classify_response_kind(mime, user_mapping) != ResponseKind::Blob);
+  typed
+    .or_else(|| content.iter().next())
+    .map(|(mime, media)| (mime.as_str(), media))
 }
 
 #[must_use]

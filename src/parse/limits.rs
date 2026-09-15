@@ -1,11 +1,10 @@
-//! Per-document input caps, each overridable by its environment
-//! variable.
+//! Per-document input caps, each overridable by its environment variable.
 
 use std::str::FromStr;
 use std::sync::OnceLock;
 
-/// A cap read once per process from the environment, falling back to a
-/// compile-time default when the variable is absent or unparsable.
+/// A cap read once per process from the environment, falling back to a compile-time default
+/// when the variable is absent or unparsable.
 pub(crate) struct EnvCap<T> {
   variable: &'static str,
   default: T,
@@ -29,8 +28,7 @@ impl<T: FromStr + Copy> EnvCap<T> {
       .get_or_init(|| self.parse(std::env::var(self.variable).ok().as_deref()))
   }
 
-  /// Resolves the cap from `raw` rather than from the environment, and
-  /// caches nothing.
+  /// Resolves the cap from `raw` rather than from the environment, and caches nothing.
   #[must_use]
   pub(crate) fn parse(&self, raw: Option<&str>) -> T {
     raw
@@ -50,9 +48,6 @@ pub(crate) static MAX_SCHEMAS: EnvCap<usize> = EnvCap::new("OPENAPI_NG_MAX_SCHEM
 pub(crate) static MAX_OPERATIONS: EnvCap<usize> = EnvCap::new("OPENAPI_NG_MAX_OPERATIONS", 10_000);
 
 /// Largest accepted ratio of re-serialised parsed bytes to source bytes.
-///
-/// The default sits well above real specs: the Swagger Petstore
-/// re-serialises near 1×, and anchor-heavy hand-written specs under 10×.
 pub(crate) static MAX_EXPANSION_RATIO: EnvCap<usize> =
   EnvCap::new("OPENAPI_NG_MAX_EXPANSION_RATIO", 50);
 

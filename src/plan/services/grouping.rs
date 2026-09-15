@@ -11,11 +11,8 @@ use crate::{
 
 pub(crate) type GroupedOperations<'a> = Vec<(String, Vec<(&'a OperationDef, MethodName)>)>;
 
-/// Groups operations by their resolved group name, resolving each
-/// operation's method name in the same pass.
-///
-/// Groups and their members come back in the order the operations were
-/// discovered, unsorted.
+/// Groups operations by their resolved group name, resolving each operation's method name in
+/// the same pass.
 pub(crate) fn group_operations<'a>(
   operations: &'a [OperationDef],
   resolver: &crate::plan::naming::NamingResolver,
@@ -38,8 +35,8 @@ pub(crate) fn group_operations<'a>(
     .map(|groups| groups.into_iter().collect())
 }
 
-/// Two operations with one method name would be two identically named class
-/// properties, or two operation files at the same path.
+/// Two operations with one method name would be two identically named class properties, or two
+/// operation files at the same path.
 fn reject_duplicate_method_name(
   members: &[(&OperationDef, MethodName)],
   operation: &OperationDef,

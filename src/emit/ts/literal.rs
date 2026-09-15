@@ -4,8 +4,7 @@ use std::borrow::Cow;
 
 use crate::identifier::is_identifier;
 
-/// Appends `value` to `out` as a single-quoted TypeScript string literal,
-/// quotes included.
+/// Appends `value` to `out` as a single-quoted TypeScript string literal, quotes included.
 pub(crate) fn escape_into(out: &mut String, value: &str) {
   out.reserve(value.len() + 2);
   out.push('\'');
@@ -37,8 +36,8 @@ pub(crate) fn quoted(value: &str) -> String {
   out
 }
 
-/// Quotes `name` when it falls outside `[A-Za-z_$][A-Za-z0-9_$]*`, which
-/// leaves a reserved word like `class` unquoted in property position.
+/// Quotes `name` when it falls outside `[A-Za-z_$][A-Za-z0-9_$]*`, which leaves a reserved word
+/// like `class` unquoted in property position.
 #[must_use]
 pub(crate) fn safe_property_name(name: &str) -> Cow<'_, str> {
   if is_identifier(name) {

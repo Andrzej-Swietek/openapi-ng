@@ -5,9 +5,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use super::writer::{Writer, write_separated};
 
 /// Width above which a statement wraps to one identifier per line.
-///
-/// Matches prettier's wrap point, which keeps a consumer's first `format`
-/// run a no-op and regeneration an empty diff.
 const INLINE_WIDTH: usize = 100;
 
 /// One imported or re-exported name, optionally renamed.
@@ -45,8 +42,6 @@ impl<'a> Binding<'a> {
   }
 }
 
-/// Emits one `import type { … } from '…';` per path, names in iteration
-/// order.
 pub(crate) fn type_import_block(out: &mut Writer, by_path: &BTreeMap<&str, BTreeSet<&str>>) {
   by_path.iter().for_each(|(path, names)| {
     import_line(
@@ -62,8 +57,7 @@ pub(crate) fn type_import_block(out: &mut Writer, by_path: &BTreeMap<&str, BTree
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Statement {
   TypeImport,
-  /// `export type { … } from '…'` — re-exports the names instead of
-  /// binding them locally.
+  /// `export type { … } from '…'` — re-exports the names instead of binding them locally.
   TypeReexport,
 }
 
@@ -85,8 +79,8 @@ impl Statement {
   }
 }
 
-/// Emits one statement binding `bindings` from `path`, wrapping when the
-/// single-line form would exceed [`INLINE_WIDTH`].
+/// Emits one statement binding `bindings` from `path`, wrapping when the single-line form would
+/// exceed [`INLINE_WIDTH`].
 pub(crate) fn import_line<'a>(
   out: &mut Writer,
   bindings: impl IntoIterator<Item = Binding<'a>>,
@@ -120,8 +114,8 @@ pub(crate) fn import_line<'a>(
   out.push("';\n");
 }
 
-/// Emits `export type { … } from '…';`, dropping the rename where the
-/// exported name already matches the imported one.
+/// Emits `export type { … } from '…';`, dropping the rename where the exported name already
+/// matches the imported one.
 pub(crate) fn type_reexport_line<'a>(
   out: &mut Writer,
   entries: impl IntoIterator<Item = (&'a str, &'a str)>,

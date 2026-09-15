@@ -1,5 +1,4 @@
-//! Evaluates one rule, and runs a fallback chain until an entry
-//! succeeds. [`RuleFailure`] enumerates every way an entry can fail.
+//! Evaluates one rule, and runs a fallback chain until an entry succeeds.
 
 use std::collections::HashMap;
 

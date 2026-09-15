@@ -10,8 +10,8 @@ use crate::parse::openapi_model::Schema;
 use super::super::URL_ENCODED;
 use super::{BINARY, FormBody, FormKind, Reject, URLENCODED_BINARY_FIELD};
 
-/// One body property's raw `format` hints: `own` from the property
-/// schema, `items` from its array-item schema.
+/// One body property's raw `format` hints: `own` from the property schema, `items` from its
+/// array-item schema.
 #[derive(Clone, Copy, Default)]
 pub(super) struct RawPropertyFormat<'a> {
   pub(super) own: Option<&'a str>,
@@ -19,7 +19,6 @@ pub(super) struct RawPropertyFormat<'a> {
 }
 
 /// Collects the per-property `format` hints `SchemaType` does not carry.
-/// Empty when the body is a top-level `$ref`.
 #[must_use]
 pub(super) fn collect_raw_property_formats(
   raw_schema: &Schema,
@@ -41,8 +40,7 @@ pub(super) fn collect_raw_property_formats(
     .collect()
 }
 
-/// Classifies one form-body property. Accepts a scalar, a binary, or an
-/// array of either; every other shape fails with the matching [`Reject`].
+/// Classifies one form-body property.
 pub(super) fn classify_body_field_type(
   schema: &SchemaType,
   raw_format: RawPropertyFormat<'_>,

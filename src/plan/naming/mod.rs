@@ -1,5 +1,5 @@
-//! Derives each operation's `methodName` and `group` through
-//! [`NamingResolver`], with the project-fixed formatting in [`fixed`].
+//! Derives each operation's `methodName` and `group` through [`NamingResolver`], with the
+//! project-fixed formatting in [`fixed`].
 
 mod case;
 mod config;
@@ -30,8 +30,8 @@ use context::OperationContext;
 use defaults::{default_group, default_method_name};
 use engine::{RuleFailure, evaluate_chain};
 
-/// Resolves a name per operation, from the caller's config or from the
-/// hardcoded default when a key is unconfigured.
+/// Resolves a name per operation, from the caller's config or from the hardcoded default when a
+/// key is unconfigured.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct NamingResolver {
   pub(crate) config: NamingConfig,

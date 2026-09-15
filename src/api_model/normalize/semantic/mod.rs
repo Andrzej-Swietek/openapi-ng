@@ -1,5 +1,5 @@
-//! Schema sorting, discriminator narrowing and `$ref` validation, run once
-//! schema and operation lowering are done.
+//! Schema sorting, discriminator narrowing and `$ref` validation, run once schema and operation
+//! lowering are done.
 
 mod discriminator;
 mod references;

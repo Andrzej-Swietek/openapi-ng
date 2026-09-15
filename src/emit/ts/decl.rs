@@ -4,17 +4,15 @@ use super::literal::quoted;
 use super::types::{Render, member_declaration};
 use super::writer::{Writer, wln};
 
-/// Width below which a top-level literal union stays on one line. Counts
-/// the joined `'a' | 'b'` form, not the `export type X = ` prefix, and
-/// matches prettier's default `printWidth`.
+/// Width below which a top-level literal union stays on one line.
 const UNION_INLINE_WIDTH: usize = 80;
 
 /// The JSDoc a declaration carries.
 #[derive(Clone, Copy, Default)]
 pub(crate) struct Doc<'a> {
   pub(crate) description: Option<&'a str>,
-  /// The source declared `deprecated: true`; renders as an `@deprecated`
-  /// tag so IDEs mark the reference site.
+  /// The source declared `deprecated: true`; renders as an `@deprecated` tag so IDEs mark the
+  /// reference site.
   pub(crate) deprecated: bool,
 }
 
@@ -42,8 +40,7 @@ impl<'a> Doc<'a> {
   }
 }
 
-/// Emits `doc` as a JSDoc block, or nothing when it carries neither prose
-/// nor a deprecation.
+/// Emits `doc` as a JSDoc block, or nothing when it carries neither prose nor a deprecation.
 pub(crate) fn jsdoc(out: &mut Writer, doc: Doc<'_>) {
   if doc.is_empty() {
     return;
@@ -101,8 +98,7 @@ pub(crate) fn type_alias(out: &mut Writer, name: &str, doc: Doc<'_>, rhs: &str) 
   wln!(out, "export type {name} = {rhs};");
 }
 
-/// Emits a string-literal union, collapsing to one line when it fits
-/// [`UNION_INLINE_WIDTH`].
+/// Emits a string-literal union, collapsing to one line when it fits [`UNION_INLINE_WIDTH`].
 pub(crate) fn string_union(out: &mut Writer, name: &str, doc: Doc<'_>, values: &[String]) {
   jsdoc(out, doc);
 

@@ -1,7 +1,4 @@
 //! Per-operation request-contract planning.
-//!
-//! `plan_request_contract` is the entry point; the submodules own the
-//! grouping and the body layout it composes.
 
 mod body;
 mod grouping;

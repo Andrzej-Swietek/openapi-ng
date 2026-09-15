@@ -7,9 +7,8 @@ use crate::parse::openapi_model::{AdditionalProperties, Schema};
 use super::super::{SchemaWalk, bail_unsupported_rule};
 use super::normalize_schema;
 
-/// Lowers a bare `additionalProperties` into [`SchemaType::Map`], failing
-/// when it is combined with `properties`, `required`, `$ref`, a
-/// composition keyword or a non-object `type`.
+/// Lowers a bare `additionalProperties` into [`SchemaType::Map`], failing when it is combined
+/// with `properties`, `required`, `$ref`, a composition keyword or a non-object `type`.
 pub(super) fn normalize_additional_properties(
   schema: &Schema,
   additional: &AdditionalProperties,

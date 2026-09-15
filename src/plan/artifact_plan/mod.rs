@@ -1,5 +1,4 @@
-//! The shapes the emitters read: one plan per service, per operation and
-//! per request field.
+//! The shapes the emitters read: one plan per service, per operation and per request field.
 
 mod collisions;
 mod resolve;
@@ -11,8 +10,8 @@ use crate::options::MappedType;
 
 pub(crate) use resolve::{resolve_service_plans, validate_mapped_types_against_schemas};
 
-/// A [`MappedType`] whose `schema` was found in the IR, borrowed from the
-/// model symbol that matched.
+/// A [`MappedType`] whose `schema` was found in the IR, borrowed from the model symbol that
+/// matched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ResolvedMappedType<'a> {
   pub(crate) schema: &'a str,
@@ -51,14 +50,13 @@ pub(crate) struct PlannedOperation<'model> {
   pub(crate) path: String,
   pub(crate) request: PlannedRequestContract<'model>,
   pub(crate) response: Option<&'model ResponseContent>,
-  /// The operation's typed error responses, empty when it declared
-  /// none.
+  /// The operation's typed error responses, empty when it declared none.
   pub(crate) errors: &'model [ErrorResponse],
-  /// Name of the `{Pascal}Params` interface, or `None` when the operation
-  /// declares no path, query, header or body input and so emits none.
+  /// Name of the `{Pascal}Params` interface, or `None` when the operation declares no path,
+  /// query, header or body input and so emits none.
   pub(crate) request_interface: Option<TypeName>,
-  /// Name of the `{Pascal}Error` interface, or `None` when the operation
-  /// declares no 4xx/5xx response with a JSON schema.
+  /// Name of the `{Pascal}Error` interface, or `None` when the operation declares no 4xx/5xx
+  /// response with a JSON schema.
   pub(crate) error_interface: Option<TypeName>,
   pub(crate) description: Option<String>,
   pub(crate) deprecated: bool,
@@ -66,8 +64,7 @@ pub(crate) struct PlannedOperation<'model> {
   pub(crate) artifact_path: Option<String>,
 }
 
-/// Which slot of the HTTP request a [`PlannedRequestField`] fills. `Body`
-/// marks a property hoisted out of an inline JSON body.
+/// Which slot of the HTTP request a [`PlannedRequestField`] fills.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RequestFieldKind {
   Path,
@@ -118,7 +115,6 @@ pub(crate) enum PlannedRequestBody<'model> {
     optional: bool,
   },
   /// An inline JSON object body, its properties hoisted to top level.
-  /// Each `optional` already folds in the envelope's `required`.
   FlatJson {
     properties: Vec<PlannedRequestField<'model>>,
     required: bool,
@@ -127,8 +123,7 @@ pub(crate) enum PlannedRequestBody<'model> {
   Multipart {
     fields: Vec<PlannedFormField<'model>>,
   },
-  /// An `application/x-www-form-urlencoded` body, its fields hoisted to
-  /// top level.
+  /// An `application/x-www-form-urlencoded` body, its fields hoisted to top level.
   UrlEncoded {
     fields: Vec<PlannedFormField<'model>>,
   },

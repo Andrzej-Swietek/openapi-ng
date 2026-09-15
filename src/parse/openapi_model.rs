@@ -37,8 +37,6 @@ pub(crate) struct PathItem {
 }
 
 impl PathItem {
-  /// Yields each declared `(method, operation)` pair in alphabetical
-  /// method order.
   pub(crate) fn operations(&self) -> impl Iterator<Item = (&'static str, &Operation)> {
     [
       ("delete", self.delete.as_ref()),
@@ -73,8 +71,7 @@ pub(crate) struct Operation {
 }
 
 impl Operation {
-  /// Returns summary and description joined with a blank line, or whichever
-  /// is present alone. Whitespace-only values are treated as absent.
+  /// Returns summary and description joined with a blank line, or whichever is present alone.
   #[must_use]
   pub(crate) fn merged_description(&self) -> Option<String> {
     match (
@@ -151,9 +148,7 @@ pub(crate) struct Schema {
   /// OpenAPI `deprecated: true` on the schema.
   #[serde(default)]
   pub(crate) deprecated: bool,
-  /// OpenAPI `format` hint (`uuid`, `date-time`, `int32`, …). Read only
-  /// to detect `binary` on a form-body field; every other value is
-  /// reported as dropped.
+  /// OpenAPI `format` hint (`uuid`, `date-time`, `int32`, …).
   pub(crate) format: Option<String>,
 }
 
@@ -162,9 +157,8 @@ pub(crate) struct Schema {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Discriminator {
   pub(crate) property_name: String,
-  /// OpenAPI `discriminator.mapping`: a wire value against either a full
-  /// `$ref` (`#/components/schemas/Cat`) or a bare schema name. Empty
-  /// when the spec omits the field.
+  /// OpenAPI `discriminator.mapping`: a wire value against either a full `$ref`
+  /// (`#/components/schemas/Cat`) or a bare schema name.
   #[serde(default)]
   pub(crate) mapping: UniqueMap<String>,
 }

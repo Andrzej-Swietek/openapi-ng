@@ -7,19 +7,15 @@ export declare const EmitTarget: {
   readonly Angular: 'angular';
 };
 
-/**
- * One generated artifact. `contents` carries the emitted source whether
- * or not the caller also asked for it on disk.
- */
+/** One generated artifact. */
 export interface GeneratedArtifact {
   path: string
   contents: string
 }
 
 /**
- * Payload returned inside `GenerateOutcome.error`, which the JS wrapper
- * turns into a `GenerateError`. The fatal sits at the top level;
- * pre-fatal warnings ride in `warnings`.
+ * Payload returned inside `GenerateOutcome.error`, which the JS wrapper turns into a
+ * `GenerateError`.
  */
 export interface GenerateErrorPayload {
   code: DiagnosticCode
@@ -30,43 +26,25 @@ export interface GenerateErrorPayload {
 }
 
 export interface GenerateOptions {
-  /**
-   * Path to the spec on disk. Mutually exclusive with `input_contents`;
-   * the option validator rejects requests that set both or neither.
-   */
+  /** Path to the spec on disk. */
   inputPath?: string
-  /**
-   * Raw spec source. When set, `display_path` is required and the
-   * 16 MiB byte cap applies to `input_contents.as_bytes().len()`.
-   */
+  /** Raw spec source. */
   inputContents?: string
-  /**
-   * Banner and diagnostic display string. Required with
-   * `input_contents`, ignored with `input_path`.
-   */
+  /** Banner and diagnostic display string. */
   displayPath?: string
-  /**
-   * Decoder hint. Only honoured when `input_contents` is set; combining
-   * it with `input_path` is a shape error.
-   */
+  /** Decoder hint. */
   inputFormat?: InputFormat
-  /**
-   * Optional. When undefined, generation runs in-memory (no files written).
-   * Passing an empty string is rejected at option resolution.
-   */
+  /** Optional. */
   outputPath?: string
   emit?: Array<EmitTarget>
   mappedTypes?: Array<MappedType>
   /**
-   * Per-content-type override of the response-decoding kind
-   * (`json | blob | text | arrayBuffer`).
+   * Per-content-type override of the response-decoding kind (`json | blob | text |
+   * arrayBuffer`).
    */
   responseTypeMapping?: Array<ResponseTypeMapping>
   naming?: NamingConfig
-  /**
-   * Angular output layouts. Defaults to `['services']`; only meaningful
-   * with the `angular` emit target.
-   */
+  /** Angular output layouts. */
   layout?: Array<Layout>
 }
 
@@ -77,11 +55,7 @@ export interface GenerateResult {
 }
 
 export interface GenerateSummary {
-  /**
-   * The source spec's path as supplied, with separators normalised and
-   * nothing resolved. The same string appears in every diagnostic's
-   * `path`.
-   */
+  /** The source spec's path as supplied, with separators normalised and nothing resolved. */
   normalizedSourcePath: string
   specVersion: string
   title: string
@@ -91,11 +65,8 @@ export interface GenerateSummary {
 }
 
 /**
- * Boundary projection of [`Diagnostic`] for the NAPI surface, where
- * `code` and `severity` are strings a JS consumer compares against.
- *
- * `severity` is `"warning"` or `"error"`. `subcode` is set only for
- * `PolicyViolation`.
+ * Boundary projection of [`Diagnostic`] for the NAPI surface, where `code` and `severity` are
+ * strings a JS consumer compares against.
  */
 export interface GeneratorDiagnostic {
   code: DiagnosticCode
@@ -105,10 +76,7 @@ export interface GeneratorDiagnostic {
   path: string
 }
 
-/**
- * Explicit decoder selection. Skips both extension-based detection and
- * the JSON-then-YAML sniff fallback. Honoured only with `input_contents`.
- */
+/** Explicit decoder selection. */
 export type InputFormat = 'json' | 'yaml';
 export declare const InputFormat: {
   readonly Json: 'json';
@@ -116,9 +84,8 @@ export declare const InputFormat: {
 };
 
 /**
- * One Angular output layout: the per-tag class (`services`) or one file
- * per operation plus a barrel (`operations`). Listing both emits the
- * classes on top of the operation files.
+ * One Angular output layout: the per-tag class (`services`) or one file per operation plus a
+ * barrel (`operations`).
  */
 export type Layout = 'services' | 'operations';
 export declare const Layout: {
@@ -126,10 +93,7 @@ export declare const Layout: {
   readonly Operations: 'operations';
 };
 
-/**
- * Replaces the generated declaration for `schema` with `type_name`,
- * imported from `import`. Crosses the NAPI boundary as `type`.
- */
+/** Replaces the generated declaration for `schema` with `type_name`, imported from `import`. */
 export interface MappedType {
   schema: string
   import: string
@@ -143,8 +107,8 @@ export interface NamingChainItem {
 }
 
 /**
- * The naming config as it crosses the NAPI boundary, where a JS `RegExp`
- * arrives already unpacked into `{ source, flags }`.
+ * The naming config as it crosses the NAPI boundary, where a JS `RegExp` arrives already
+ * unpacked into `{ source, flags }`.
  */
 export interface NamingOptions {
   methodName?: NamingValue
@@ -164,10 +128,7 @@ export interface NamingRuleEntry {
   case?: string
 }
 
-/**
- * A string shorthand, a single rule, or a chain of either. Exactly one
- * field must be set; `plan::naming::lower` enforces that.
- */
+/** A string shorthand, a single rule, or a chain of either. */
 export interface NamingValue {
   /** `{ string: '...' }` — bare format-string shorthand. */
   string?: string
@@ -187,8 +148,8 @@ export declare const ResponseType: {
 };
 
 /**
- * Overrides the decoded response kind for one content type, matched
- * case-insensitively against the media type the spec declares.
+ * Overrides the decoded response kind for one content type, matched case-insensitively against
+ * the media type the spec declares.
  */
 export interface ResponseTypeMapping {
   contentType: string

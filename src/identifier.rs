@@ -1,13 +1,13 @@
-//! Name types checked at construction, so a holder may interpolate one
-//! into generated TypeScript without quoting or escaping.
+//! Name types checked at construction, so a holder may interpolate one into generated
+//! TypeScript without quoting or escaping.
 
 /// An ASCII JavaScript identifier: `[A-Za-z_$][A-Za-z0-9_$]*`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct Identifier(Box<str>);
 
 impl Identifier {
-  /// Returns `None` when `name` is not a bare identifier — digits-first,
-  /// kebab-case, dotted, empty, or whitespace-bearing names all reject.
+  /// Returns `None` when `name` is not a bare identifier — digits-first, kebab-case, dotted,
+  /// empty, or whitespace-bearing names all reject.
   #[must_use]
   pub(crate) fn parse(name: &str) -> Option<Self> {
     is_identifier(name).then(|| Self(Box::from(name)))
@@ -25,8 +25,7 @@ impl std::fmt::Display for Identifier {
   }
 }
 
-/// True when `name` is a bare identifier. Prefer [`Identifier::parse`] where
-/// the validated name is kept.
+/// True when `name` is a bare identifier.
 #[must_use]
 pub(crate) fn is_identifier(name: &str) -> bool {
   let mut chars = name.chars();
@@ -37,9 +36,6 @@ pub(crate) fn is_identifier(name: &str) -> bool {
 }
 
 /// An operation's method name after the naming rules have run.
-///
-/// Not the spec's `operationId`: a rule may rewrite `Pet_listPets` into
-/// `listPets`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct MethodName(String);
 
@@ -61,8 +57,8 @@ impl std::fmt::Display for MethodName {
   }
 }
 
-/// A PascalCase TypeScript type name emitted by the generator, derived from
-/// a [`MethodName`] or a service group.
+/// A PascalCase TypeScript type name emitted by the generator, derived from a [`MethodName`] or
+/// a service group.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct TypeName(String);
 

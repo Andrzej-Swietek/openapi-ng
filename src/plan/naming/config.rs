@@ -15,9 +15,6 @@ pub(crate) enum Naming {
 }
 
 /// One entry of a fallback chain.
-///
-/// `Shorthand(s)` behaves as `Rule { format: Some(s), .. }`; the two stay
-/// distinct so a config error can name the form the caller wrote.
 #[derive(Debug, Clone)]
 pub(crate) enum RuleEntry {
   Shorthand(String),

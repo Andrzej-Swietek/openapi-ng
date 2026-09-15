@@ -1,13 +1,11 @@
-//! `enum` lowering. Only string enums are supported; they become a
-//! TypeScript literal union.
+//! `enum` lowering.
 
 use crate::error::Diagnostic;
 
 use super::super::{SchemaWalk, bail_unsupported};
 use crate::parse::openapi_model::Schema;
 
-/// Collects the enum's values, rejecting a non-string member or a value
-/// carrying a null byte.
+/// Collects the enum's values, rejecting a non-string member or a value carrying a null byte.
 pub(super) fn normalize_string_enum(
   values: &[serde_json::Value],
   walk: SchemaWalk<'_>,
@@ -34,8 +32,7 @@ pub(super) fn normalize_string_enum(
     .collect()
 }
 
-/// Accepts `type: string` or an absent `type`; every other declared type
-/// rejects.
+/// Accepts `type: string` or an absent `type`; every other declared type rejects.
 pub(super) fn validate_string_enum_type(
   schema: &Schema,
   walk: SchemaWalk<'_>,

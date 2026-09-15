@@ -15,8 +15,8 @@ pub enum EmitTarget {
   Angular,
 }
 
-/// The naming config as it crosses the NAPI boundary, where a JS `RegExp`
-/// arrives already unpacked into `{ source, flags }`.
+/// The naming config as it crosses the NAPI boundary, where a JS `RegExp` arrives already
+/// unpacked into `{ source, flags }`.
 #[napi(object)]
 #[derive(Clone, Debug)]
 pub struct NamingOptions {
@@ -24,8 +24,7 @@ pub struct NamingOptions {
   pub group: Option<NamingValue>,
 }
 
-/// A string shorthand, a single rule, or a chain of either. Exactly one
-/// field must be set; `plan::naming::lower` enforces that.
+/// A string shorthand, a single rule, or a chain of either.
 #[napi(object)]
 #[derive(Clone, Debug)]
 pub struct NamingValue {
@@ -64,35 +63,28 @@ pub struct NamingParseSpec {
 
 #[napi(object)]
 pub struct GenerateOptions {
-  /// Path to the spec on disk. Mutually exclusive with `input_contents`;
-  /// the option validator rejects requests that set both or neither.
+  /// Path to the spec on disk.
   pub input_path: Option<String>,
-  /// Raw spec source. When set, `display_path` is required and the
-  /// 16 MiB byte cap applies to `input_contents.as_bytes().len()`.
+  /// Raw spec source.
   pub input_contents: Option<String>,
-  /// Banner and diagnostic display string. Required with
-  /// `input_contents`, ignored with `input_path`.
+  /// Banner and diagnostic display string.
   pub display_path: Option<String>,
-  /// Decoder hint. Only honoured when `input_contents` is set; combining
-  /// it with `input_path` is a shape error.
+  /// Decoder hint.
   pub input_format: Option<InputFormat>,
-  /// Optional. When undefined, generation runs in-memory (no files written).
-  /// Passing an empty string is rejected at option resolution.
+  /// Optional.
   pub output_path: Option<String>,
   pub emit: Vec<EmitTarget>,
   pub mapped_types: Option<Vec<MappedType>>,
-  /// Per-content-type override of the response-decoding kind
-  /// (`json | blob | text | arrayBuffer`).
+  /// Per-content-type override of the response-decoding kind (`json | blob | text |
+  /// arrayBuffer`).
   pub response_type_mapping: Option<Vec<ResponseTypeMapping>>,
   pub naming: Option<NamingOptions>,
-  /// Angular output layouts. Defaults to `['services']`; only meaningful
-  /// with the `angular` emit target.
+  /// Angular output layouts.
   pub layout: Option<Vec<Layout>>,
 }
 
-/// One Angular output layout: the per-tag class (`services`) or one file
-/// per operation plus a barrel (`operations`). Listing both emits the
-/// classes on top of the operation files.
+/// One Angular output layout: the per-tag class (`services`) or one file per operation plus a
+/// barrel (`operations`).
 #[napi(string_enum = "lowercase")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Layout {
@@ -100,8 +92,7 @@ pub enum Layout {
   Operations,
 }
 
-/// Explicit decoder selection. Skips both extension-based detection and
-/// the JSON-then-YAML sniff fallback. Honoured only with `input_contents`.
+/// Explicit decoder selection.
 #[napi(string_enum = "lowercase")]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum InputFormat {
@@ -116,9 +107,8 @@ pub struct GenerateResult {
   pub artifacts: Vec<GeneratedArtifact>,
 }
 
-/// Payload returned inside `GenerateOutcome.error`, which the JS wrapper
-/// turns into a `GenerateError`. The fatal sits at the top level;
-/// pre-fatal warnings ride in `warnings`.
+/// Payload returned inside `GenerateOutcome.error`, which the JS wrapper turns into a
+/// `GenerateError`.
 #[napi(object)]
 pub struct GenerateErrorPayload {
   pub code: String,
@@ -135,9 +125,6 @@ pub struct GenerateOutcome {
   pub error: Option<GenerateErrorPayload>,
 }
 
-/// Projects a `catch_unwind` payload into the shape a typed fatal
-/// produces. A payload that is neither `&'static str` nor `String`
-/// collapses to a generic message.
 #[must_use]
 pub(crate) fn map_panic(panic: Box<dyn std::any::Any + Send>) -> GenerateErrorPayload {
   let message = panic

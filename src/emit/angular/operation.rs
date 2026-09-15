@@ -18,9 +18,8 @@ use super::service::write_call_site;
 const HELPER_IMPORT_PATH: &str = "../../rest.util";
 const MODEL_IMPORT_PATH: &str = "../../model";
 
-// Names that cannot be declared with `export const` in a module: ES
-// reserved words, strict-mode reserved words, and the two identifiers
-// strict mode refuses as binding names.
+// Names no `export const` can bind: reserved words, and the two strict
+// mode refuses.
 const RESERVED_IDENTIFIERS: &[&str] = &[
   "arguments",
   "await",
@@ -72,8 +71,8 @@ const RESERVED_IDENTIFIERS: &[&str] = &[
   "yield",
 ];
 
-/// One standalone operation file: the `defineOperation(...)` constant
-/// followed by its `{Pascal}Params` / `{Pascal}Error` interfaces.
+/// One standalone operation file: the `defineOperation(...)` constant followed by its
+/// `{Pascal}Params` / `{Pascal}Error` interfaces.
 #[must_use]
 pub(crate) fn emit_operation(operation: &PlannedOperation<'_>) -> String {
   let operations = std::slice::from_ref(operation);
@@ -144,16 +143,15 @@ fn needs_alias(name: &str, helper_symbols: &[&str], model_imports: &BTreeSet<&st
     || model_imports.contains(name)
 }
 
-/// `rest/<group>/index.ts`: re-exports every operation file in its
-/// directory so a namespace import of the barrel keeps only the members
-/// it touches.
+/// `rest/<group>/index.ts`: re-exports every operation file in its directory so a namespace
+/// import of the barrel keeps only the members it touches.
 #[must_use]
 pub(crate) fn emit_operations_barrel(service_plan: &ServicePlan<'_>) -> String {
   let mut buffer = Writer::with_capacity(service_plan.operations.len() * 48 + 16);
-  for operation in &service_plan.operations {
+  service_plan.operations.iter().for_each(|operation| {
     let file_stem = operation_file_stem(operation.method_name.as_str());
     wln!(buffer, "export * from './{file_stem}';");
-  }
+  });
   buffer.into_string()
 }
 

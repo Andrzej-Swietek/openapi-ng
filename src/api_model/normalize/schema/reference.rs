@@ -1,5 +1,4 @@
-//! `$ref` resolution. The supported form is an internal reference into
-//! `components.schemas`.
+//! `$ref` resolution.
 
 use crate::error::Diagnostic;
 
@@ -8,9 +7,6 @@ use super::super::{SchemaWalk, bail_unsupported};
 const INTERNAL_SCHEMA_PREFIX: &str = "#/components/schemas/";
 
 /// Returns the bare schema name a `$ref` targets.
-///
-/// Rejects a reference outside `components.schemas` — an external file, a
-/// URL, another component section — and one whose target name is empty.
 pub(in crate::api_model::normalize::schema) fn normalize_reference(
   reference: &str,
   walk: SchemaWalk<'_>,

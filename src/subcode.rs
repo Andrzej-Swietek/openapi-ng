@@ -1,5 +1,5 @@
-//! Every `subcode` a diagnostic can carry; `DiagnosticSubcode` in
-//! `index.d.ts.in` publishes the same set.
+//! Every `subcode` a diagnostic can carry; `DiagnosticSubcode` in `index.d.ts.in` publishes the
+//! same set.
 
 pub(crate) const DISCRIMINATOR_PROPERTY_MUST_BE_STRING: &str =
   "discriminator-property-must-be-string";

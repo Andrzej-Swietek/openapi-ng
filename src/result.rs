@@ -5,9 +5,7 @@ use crate::api_model::canonical::ApiModel;
 #[napi(object)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GenerateSummary {
-  /// The source spec's path as supplied, with separators normalised and
-  /// nothing resolved. The same string appears in every diagnostic's
-  /// `path`.
+  /// The source spec's path as supplied, with separators normalised and nothing resolved.
   pub normalized_source_path: String,
   pub spec_version: String,
   pub title: String,
@@ -18,8 +16,8 @@ pub struct GenerateSummary {
 }
 
 impl GenerateSummary {
-  /// Builds a summary whose counts come from the IR, and so describe what
-  /// the generator emits rather than what the document declared.
+  /// Builds a summary whose counts come from the IR, and so describe what the generator emits
+  /// rather than what the document declared.
   #[must_use]
   pub(crate) fn from_ir(normalized_source_path: String, ir: &ApiModel) -> Self {
     // One path carries an operation per method, so the list repeats.
@@ -54,8 +52,7 @@ fn clamp_count(count: usize) -> u32 {
   u32::try_from(usize::min(count, U32_MAX_AS_USIZE)).unwrap_or(u32::MAX)
 }
 
-/// One generated artifact. `contents` carries the emitted source whether
-/// or not the caller also asked for it on disk.
+/// One generated artifact.
 #[napi(object)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeneratedArtifact {

@@ -65,8 +65,8 @@ fn check_operation_cap(document: &OpenApiDocument, reporter: &Reporter) -> Resul
   Ok(())
 }
 
-/// Fails on the second operation to declare an `operationId`, naming the
-/// first, and on an operation that declares none.
+/// Fails on the second operation to declare an `operationId`, naming the first, and on an
+/// operation that declares none.
 fn check_operation_ids_are_unique(
   document: &OpenApiDocument,
   reporter: &Reporter,
@@ -94,8 +94,8 @@ fn check_operation_ids_are_unique(
     .map(|_| ())
 }
 
-/// Records `operation_id` against `method` and `path`, failing when another
-/// operation already claimed it.
+/// Records `operation_id` against `method` and `path`, failing when another operation already
+/// claimed it.
 fn claim_operation_id<'a>(
   mut declared: BTreeMap<&'a str, (&'static str, &'a str)>,
   operation_id: &'a str,

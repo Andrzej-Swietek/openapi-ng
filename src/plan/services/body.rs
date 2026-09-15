@@ -12,13 +12,8 @@ use crate::{
   },
 };
 
-/// Chooses a body's layout:
-///
-/// - an inline JSON object → `FlatJson`, its properties hoisted and each
-///   `optional` folding in the envelope's `required`;
-/// - any other JSON shape → `Nested`, under one `body` key;
-/// - a form body → `Multipart` / `UrlEncoded`, its fields hoisted and
-///   sorted by name.
+/// The body's layout: an inline JSON object hoists its properties, any
+/// other JSON shape nests under `body`, a form body hoists its fields.
 #[must_use]
 pub(super) fn plan_request_body<'model>(
   body: Option<&'model RequestBodyDef>,
@@ -68,9 +63,8 @@ fn plan_form_fields<'model>(fields: &'model [BodyField]) -> Vec<PlannedFormField
   out
 }
 
-/// Fails when a hoisted body field name clashes with a path or query
-/// parameter already on `fields`. A nested body occupies the single
-/// `body` key and cannot clash.
+/// Fails when a hoisted body field name clashes with a path or query parameter already on
+/// `fields`.
 pub(super) fn check_body_field_collisions(
   fields: &[PlannedRequestField],
   body: Option<&PlannedRequestBody>,

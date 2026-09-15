@@ -4,8 +4,7 @@ use napi_derive::napi;
 
 use crate::bindings::{EmitTarget, InputFormat, Layout, NamingOptions};
 
-/// Replaces the generated declaration for `schema` with `type_name`,
-/// imported from `import`. Crosses the NAPI boundary as `type`.
+/// Replaces the generated declaration for `schema` with `type_name`, imported from `import`.
 #[napi(object)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MappedType {
@@ -16,8 +15,8 @@ pub struct MappedType {
   pub alias: Option<String>,
 }
 
-/// Overrides the decoded response kind for one content type, matched
-/// case-insensitively against the media type the spec declares.
+/// Overrides the decoded response kind for one content type, matched case-insensitively against
+/// the media type the spec declares.
 #[napi(object)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ResponseTypeMapping {
@@ -38,8 +37,8 @@ pub enum ResponseType {
 /// A generation request after validation.
 #[derive(Clone, Debug)]
 pub struct GenerateConfig {
-  /// Set when the caller passed `input_path`; mutually exclusive with
-  /// `input_contents` (validated in `resolve_generate_config`).
+  /// Set when the caller passed `input_path`; mutually exclusive with `input_contents`
+  /// (validated in `resolve_generate_config`).
   pub input_path: Option<String>,
   pub input_contents: Option<String>,
   pub display_path: Option<String>,

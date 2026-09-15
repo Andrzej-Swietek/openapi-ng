@@ -1,5 +1,4 @@
-//! Request-body lowering: content-type dispatch onto JSON, multipart or
-//! urlencoded.
+//! Request-body lowering: content-type dispatch onto JSON, multipart or urlencoded.
 
 use crate::api_model::canonical::{BodyContent, BodyField, RequestBodyDef};
 use crate::api_model::schema::SchemaType;
@@ -66,8 +65,7 @@ fn normalize_content(
   }
 }
 
-/// Rejects a JSON body that declares no schema, or one no more precise than
-/// `{}`.
+/// Rejects a JSON body that declares no schema, or one no more precise than `{}`.
 fn normalize_json_body(
   media: &MediaType,
   context: LoweringContext<'_>,

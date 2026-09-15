@@ -25,8 +25,7 @@ pub(super) fn write_params_line(buffer: &mut Writer, operation: &PlannedOperatio
   buffer.push(" }),\n");
 }
 
-/// Writes the `body: …,` line for whichever body layout the operation
-/// declares.
+/// Writes the `body: …,` line for whichever body layout the operation declares.
 pub(super) fn write_body_line(buffer: &mut Writer, operation: &PlannedOperation<'_>) {
   let Some(body) = operation.request.body.as_ref() else {
     return;
@@ -49,9 +48,7 @@ pub(super) fn write_body_line(buffer: &mut Writer, operation: &PlannedOperation<
   }
 }
 
-/// Writes the IIFE that materializes a form-body payload. A scalar field
-/// is wrapped in `String(…)`, a binary passes through, and an optional
-/// one is guarded so an absent value leaves its key out.
+/// Writes the IIFE that materializes a form-body payload.
 pub(super) fn write_form_body(
   buffer: &mut Writer,
   fields: &[PlannedFormField<'_>],
@@ -95,8 +92,6 @@ pub(super) fn write_form_body(
 }
 
 /// Writes `path`, expanding each `{name}` to `${encodeURIComponent(name)}`.
-/// An unmatched `{` emits the remainder verbatim so adversarial IR yields
-/// wrong output instead of a panic across the NAPI boundary.
 pub(super) fn write_path_template_into(buffer: &mut Writer, path: &str) {
   let mut rest = path;
   while let Some(open) = rest.find('{') {

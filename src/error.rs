@@ -18,8 +18,7 @@ pub enum DiagnosticCode {
   InvalidReference,
   /// A caller-supplied option is invalid.
   InvalidOption,
-  /// A missing tag or operationId, a request-field collision, or a
-  /// planner refusal.
+  /// A missing tag or operationId, a request-field collision, or a planner refusal.
   PolicyViolation,
   /// Writing an output file failed.
   WriteFailed,
@@ -42,8 +41,7 @@ impl DiagnosticCode {
   }
 }
 
-/// One diagnostic; a fatal travels as `Err`, a warning through
-/// [`Reporter::warning`].
+/// One diagnostic; a fatal travels as `Err`, a warning through [`Reporter::warning`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Diagnostic {
   pub code: DiagnosticCode,
@@ -104,11 +102,8 @@ impl std::fmt::Display for Diagnostic {
 
 impl std::error::Error for Diagnostic {}
 
-/// Boundary projection of [`Diagnostic`] for the NAPI surface, where
-/// `code` and `severity` are strings a JS consumer compares against.
-///
-/// `severity` is `"warning"` or `"error"`. `subcode` is set only for
-/// `PolicyViolation`.
+/// Boundary projection of [`Diagnostic`] for the NAPI surface, where `code` and `severity` are
+/// strings a JS consumer compares against.
 #[napi(object)]
 #[derive(Clone, Debug, Serialize)]
 pub struct GeneratorDiagnostic {
@@ -119,8 +114,7 @@ pub struct GeneratorDiagnostic {
   pub path: String,
 }
 
-/// Borrowed breadcrumb naming one position of a schema walk. Building one
-/// is allocation-free; only [`Context::render`] allocates.
+/// Borrowed breadcrumb naming one position of a schema walk.
 #[derive(Clone, Copy)]
 pub(crate) enum Context<'a> {
   /// Top-level named schema: renders as `"schema {name}"`.
@@ -132,8 +126,8 @@ pub(crate) enum Context<'a> {
   },
   /// An `additionalProperties` sub-schema: renders as `"{parent} additionalProperties"`.
   AdditionalProperties { parent: &'a Context<'a> },
-  /// One member of a oneOf/anyOf/allOf array (1-based index):
-  /// renders as `"{parent} composition member {index}"`.
+  /// One member of a oneOf/anyOf/allOf array (1-based index): renders as `"{parent} composition
+  /// member {index}"`.
   CompositionMember {
     parent: &'a Context<'a>,
     index: usize,
@@ -168,8 +162,7 @@ impl<'a> Context<'a> {
   }
 }
 
-/// Diagnostic sink for one run. Attaches the display path to every
-/// diagnostic it builds and accumulates the pre-fatal warnings.
+/// Diagnostic sink for one run.
 pub(crate) struct Reporter {
   path: Rc<str>,
   warnings: RefCell<Vec<Diagnostic>>,
@@ -190,8 +183,7 @@ impl Reporter {
     Diagnostic::new(code, message, Rc::clone(&self.path))
   }
 
-  /// Records a pre-fatal warning. `subcode` is a stable kebab-case tag,
-  /// `None` when no subdivision applies.
+  /// Records a pre-fatal warning.
   pub(crate) fn warning(
     &self,
     code: DiagnosticCode,

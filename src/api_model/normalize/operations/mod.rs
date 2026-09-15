@@ -1,7 +1,4 @@
 //! OpenAPI paths → canonical `OperationDef`s.
-//!
-//! Each submodule owns one slot of an operation: the path template, the
-//! parameters, the request body, and the responses.
 
 mod body;
 mod form;
@@ -30,11 +27,8 @@ pub(super) const JSON: &str = "application/json";
 pub(super) const MULTIPART: &str = "multipart/form-data";
 pub(super) const URL_ENCODED: &str = "application/x-www-form-urlencoded";
 
-/// Everything an operation's lowering needs besides the operation itself:
-/// where it sits, the schemas its `$ref`s may resolve to, the caller's
-/// response-kind overrides, and the diagnostic sink.
-///
-/// `method` is the canonical upper-case name.
+/// Where an operation sits, what its `$ref`s resolve against, and where its
+/// diagnostics go.
 #[derive(Clone, Copy)]
 pub(super) struct LoweringContext<'a> {
   method: &'a str,
