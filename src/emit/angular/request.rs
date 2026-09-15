@@ -259,7 +259,9 @@ fn write_form_body(buffer: &mut Writer, fields: &[PlannedFormField<'_>], kind: F
 
 /// Writes `path` into `buffer`, expanding each `{name}` placeholder to
 /// `${encodeURIComponent(name)}`. `validate_path_template` has already
-/// balanced the braces; an unmatched `{` emits the remainder verbatim.
+/// balanced the braces; an unmatched `{` emits the remainder verbatim so
+/// adversarial IR yields wrong output instead of a panic across the NAPI
+/// boundary.
 fn write_path_template_into(buffer: &mut Writer, path: &str) {
   let mut rest = path;
   while let Some(open) = rest.find('{') {

@@ -8,6 +8,7 @@ const { field, inputError } = require('../../lib/diagnostic.js');
 /** @typedef {import('../../index.js').Config} Config */
 /** @typedef {import('../../index.js').EmitTarget} EmitTarget */
 /** @typedef {import('../../index.js').MappedType} MappedType */
+/** @typedef {import('../../index.js').Layout} Layout */
 
 /**
  * What `parseArgs` resolved the command line to.
@@ -24,6 +25,7 @@ const { field, inputError } = require('../../lib/diagnostic.js');
  *   mappedTypes: MappedType[] | null,
  *   configPath: string | null,
  *   naming?: import('../../index.js').NamingConfig | null,
+ *   layout?: Layout[] | null,
  * }} ParsedGenerate
  * @typedef {ParsedVersion | ParsedHelp | ParsedInit | ParsedGenerate} ParsedArgs
  */
@@ -39,20 +41,15 @@ const { field, inputError } = require('../../lib/diagnostic.js');
  *   mappedTypes: MappedType[] | null,
  *   responseTypeMapping: import('../../index.js').ResponseTypeMapping[] | null,
  *   naming: import('../../index.js').NamingConfig | null,
+ *   layout: Layout[] | null,
  * }} MergedConfig
  */
 
-const VALID_EMIT_TARGETS = Object.freeze(new Set(['models', 'angular']));
-
-/**
- * @param {string} value
- * @returns {value is EmitTarget}
- */
-function isEmitTarget(value) {
-  return VALID_EMIT_TARGETS.has(value);
-}
-/** @type {readonly EmitTarget[]} */
-const DEFAULT_EMIT = Object.freeze(['models', 'angular']);
+const {
+  DEFAULT_EMIT,
+  VALID_EMIT: VALID_EMIT_TARGETS,
+  VALID_LAYOUTS,
+} = require('../../lib/wrapper-core.js');
 
 const VALID_INIT_FORMATS = Object.freeze(new Set(['yaml', 'json', 'ts', 'js']));
 
@@ -77,15 +74,17 @@ function requireValue(argv, i, flagName) {
 }
 
 /**
- * Normalises a CLI comma-string or config array into a deduped array of
- * recognised targets, `null` when nothing was given.
+ * A CLI comma-string or a config array, deduped; `null` means "not set", so
+ * the Rust default applies.
  *
  * @param {unknown} value
- * @returns {EmitTarget[] | null}
+ * @param {{ key: string, label: string, allowed: ReadonlySet<string> }} spec
+ * @returns {string[] | null}
  */
-function normalizeEmit(value) {
+function normalizeList(value, { key, label, allowed }) {
   if (value === null || value === undefined) return null;
 
+  const names = Array.from(allowed);
   let items;
   if (Array.isArray(value)) {
     items = value.map(v => String(v).trim()).filter(Boolean);
@@ -96,25 +95,50 @@ function normalizeEmit(value) {
       .filter(Boolean);
   } else {
     throw new Error(
-      `Invalid emit value: expected an array (YAML 'emit: [models, angular]') ` +
-        `or comma-separated string ('--emit models,angular'); got ${typeof value}.`,
+      `Invalid ${key} value: expected an array (YAML '${key}: [${names.join(', ')}]') ` +
+        `or comma-separated string ('--${key} ${names.join(',')}'); got ${typeof value}.`,
     );
   }
 
-  /** @type {EmitTarget[]} */
-  const targets = [];
+  const quoted = names.map(name => `'${name}'`).join(', ');
   for (const item of items) {
-    if (!isEmitTarget(item)) {
-      throw new Error(`Unknown emit target: '${item}'. Allowed: 'models', 'angular'.`);
+    if (!allowed.has(item)) {
+      throw new Error(`Unknown ${label}: '${item}'. Allowed: ${quoted}.`);
     }
-    if (!targets.includes(item)) targets.push(item);
   }
 
+  return Array.from(new Set(items));
+}
+
+/**
+ * @param {unknown} value
+ * @returns {EmitTarget[] | null}
+ */
+function normalizeEmit(value) {
+  /** @type {EmitTarget[] | null} */
+  // eslint-disable-next-line no-undef -- narrowed by VALID_EMIT_TARGETS above.
+  const targets = /** @type {EmitTarget[] | null} */ (
+    normalizeList(value, {
+      key: 'emit',
+      label: 'emit target',
+      allowed: VALID_EMIT_TARGETS,
+    })
+  );
   return targets;
 }
 
 /**
- * @param {string} value A `<schema:import:type(:alias)?>` triple or quad.
+ * @param {unknown} value
+ * @returns {Layout[] | null}
+ */
+function normalizeLayout(value) {
+  return /** @type {Layout[] | null} */ (
+    normalizeList(value, { key: 'layout', label: 'layout', allowed: VALID_LAYOUTS })
+  );
+}
+
+/**
+ * @param {unknown} value
  * @returns {MappedType}
  */
 function parseMappedType(value) {
@@ -363,6 +387,7 @@ function mergeConfig(fileConfig, cliFlags) {
     mappedTypes: null,
     responseTypeMapping: null,
     naming: null,
+    layout: null,
   };
 
   merged.inputPath = cliFlags.inputPath ?? fileConfig.input ?? null;
@@ -381,6 +406,8 @@ function mergeConfig(fileConfig, cliFlags) {
   );
 
   merged.naming = cliFlags.naming ?? normalizeNamingFromFile(fileConfig.naming);
+
+  merged.layout = cliFlags.layout ?? normalizeLayout(fileConfig.layout);
 
   return merged;
 }
@@ -456,6 +483,7 @@ function parseArgs(argv) {
   let verbose = null;
   const emitTokens = [];
   const mappedTypes = [];
+  const layoutTokens = [];
 
   for (let index = 0; index < rest.length; index += 1) {
     const token = rest[index] ?? '';
@@ -496,12 +524,19 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (token === '--layout') {
+      layoutTokens.push(requireValue(rest, index, '--layout'));
+      index += 1;
+      continue;
+    }
+
     throw new Error(`Unsupported argument: ${token}`);
   }
 
   // Normalise eagerly so unknown emit targets fail at parse time rather
   // than at validate time inside the Rust binding.
   const emit = emitTokens.length > 0 ? normalizeEmit(emitTokens.join(',')) : null;
+  const layout = layoutTokens.length > 0 ? normalizeLayout(layoutTokens.join(',')) : null;
 
   return {
     kind: 'generate',
@@ -510,6 +545,7 @@ function parseArgs(argv) {
     verbose,
     emit,
     mappedTypes: mappedTypes.length > 0 ? mappedTypes : null,
+    layout,
     configPath,
   };
 }
@@ -522,6 +558,7 @@ module.exports = {
   normalizeResponseTypeMapping,
   normalizeNamingFromFile,
   normalizeEmit,
+  normalizeLayout,
   mergeConfig,
   parseArgs,
   DEFAULT_EMIT,

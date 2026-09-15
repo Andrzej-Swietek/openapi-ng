@@ -9,6 +9,7 @@
       },
       "devDependencies": {
         "@angular/common": "22.1.3",
+        "@angular/compiler": "22.1.3",
         "@angular/core": "22.1.3",
         "@angular/forms": "22.1.3",
         "@emnapi/core": "1.11.3",
@@ -56,8 +57,6 @@
       "version": "0.0.0",
       "dependencies": {
         "@astrojs/starlight": "0.41.7",
-        "@avsystem/openapi-ng": "0.5.1",
-        "@avsystem/openapi-ng-wasm32-wasi": "0.5.1",
         "@codemirror/lang-javascript": "6.2.5",
         "@codemirror/lang-json": "6.0.2",
         "@codemirror/lang-yaml": "6.1.3",
@@ -93,6 +92,8 @@
   },
   "packages": {
     "@angular/common": ["@angular/common@22.1.3", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/core": "22.1.3", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-QtMkjhiRd0EnmKR50bw3WbCWYTi6CmA72nnSz1BLQPpaLSi2goloCrPPniHz8fP+w2ESrmmlOWxs1Da3COgnQg=="],
+
+    "@angular/compiler": ["@angular/compiler@22.1.3", "", { "dependencies": { "tslib": "^2.3.0" } }, "sha512-L8Mw2r7bGG/obqgQC+RU3mdFJ3NtLgO5gWhEC1ylcHpLCMPIAXYsMKJIL8dnS78S1wXo/omXwmJ4FiIlCwWahg=="],
 
     "@angular/core": ["@angular/core@22.1.3", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/compiler": "22.1.3", "rxjs": "^6.5.3 || ^7.4.0", "zone.js": "~0.15.0 || ~0.16.0" }, "optionalPeers": ["@angular/compiler", "zone.js"] }, "sha512-313+Xkf970AmStJE0E/zNJW/9xvDExQG+6TNltBBl+KJsW0q5dffK2w2PQfV4mtTquBqYoeHSRsms4WgjBKL8g=="],
 
@@ -146,29 +147,9 @@
 
     "@astrojs/yaml2ts": ["@astrojs/yaml2ts@0.2.4", "", { "dependencies": { "yaml": "^2.8.3" } }, "sha512-8oddpOae35pJsXPQXhTkM0ypfKPskVsh2bCxRtbf7e+/Epw2nReakFYpLKjZMEr75CsoF203PMnCocpfz0s69A=="],
 
-    "@avsystem/openapi-ng": ["@avsystem/openapi-ng@0.5.1", "", { "dependencies": { "yaml": "^2.9.0" }, "optionalDependencies": { "@avsystem/openapi-ng-darwin-arm64": "0.5.1", "@avsystem/openapi-ng-darwin-x64": "0.5.1", "@avsystem/openapi-ng-linux-arm64-gnu": "0.5.1", "@avsystem/openapi-ng-linux-arm64-musl": "0.5.1", "@avsystem/openapi-ng-linux-x64-gnu": "0.5.1", "@avsystem/openapi-ng-linux-x64-musl": "0.5.1", "@avsystem/openapi-ng-win32-arm64-msvc": "0.5.1", "@avsystem/openapi-ng-win32-x64-msvc": "0.5.1" }, "peerDependencies": { "@angular/common": ">=20.0.0", "@angular/core": ">=20.0.0", "@angular/forms": ">=21.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@angular/common", "@angular/core", "@angular/forms", "rxjs"], "bin": { "openapi-ng": "bin/openapi-ng.js" } }, "sha512-vHEteiYAmabM/p8iomjzhLUfzrGPIKNB1gt8oXZkBPB7Cq6RFod0i5oYtnW1eBevMOcHuen9cyEaSNbpWs4obA=="],
-
     "@avsystem/openapi-ng-angular-consumer-proof": ["@avsystem/openapi-ng-angular-consumer-proof@workspace:__test__/angular-consumer"],
 
-    "@avsystem/openapi-ng-darwin-arm64": ["@avsystem/openapi-ng-darwin-arm64@0.5.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-eRkWjsVRQmMcbcVy0uqDhrT1rBUmKemnHIO5gyy+c9nahJTZgb2MUK4uACMnan8z9k9HFTHoa6htbJKxAdqF8Q=="],
-
-    "@avsystem/openapi-ng-darwin-x64": ["@avsystem/openapi-ng-darwin-x64@0.5.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-wQCbR7+Djfvn12MFCIxT46Kg9B4bZfd05RxFvLoecuTdVSr3Cbf1xfDOV5G0fEPHBQoUTjjMrRJ3YzV2JQwOcw=="],
-
-    "@avsystem/openapi-ng-linux-arm64-gnu": ["@avsystem/openapi-ng-linux-arm64-gnu@0.5.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-Gpr5lD6K+PaUOGDuoIt4ubf0naPRKGKTwDBn1L/b9upkcI9FLIZUVUbz2xOwTvnkEuJW9lkvYRYV9xfB5d1YVA=="],
-
-    "@avsystem/openapi-ng-linux-arm64-musl": ["@avsystem/openapi-ng-linux-arm64-musl@0.5.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-sdpOa0/dwQa88sHQRccXndaVPCWyDOi/+KEvr40oQ9w+QfXtgM379pCGkueO9yTjWXWRopnPwjPy6QXV0ybC1A=="],
-
-    "@avsystem/openapi-ng-linux-x64-gnu": ["@avsystem/openapi-ng-linux-x64-gnu@0.5.1", "", { "os": "linux", "cpu": "x64" }, "sha512-2vS0gvvUivZQJtns1GJ7kh3H5BrYTWK8TirPRQymeG4XTHw4VemrSB8Cb1OV4runOr0Lpd9GBwO7hfvkrSRgvw=="],
-
-    "@avsystem/openapi-ng-linux-x64-musl": ["@avsystem/openapi-ng-linux-x64-musl@0.5.1", "", { "os": "linux", "cpu": "x64" }, "sha512-iSELKxFPV81K396+kNUm1uG5eTLWAYVILJABZhI9kqdKP3wZslch/0A8+Qd51J2X88Ii0YG8T10Kaei3F37tKg=="],
-
-    "@avsystem/openapi-ng-wasm32-wasi": ["@avsystem/openapi-ng-wasm32-wasi@0.5.1", "", { "dependencies": { "@emnapi/core": "1.11.3", "@emnapi/runtime": "1.11.3", "@napi-rs/wasm-runtime": "~1.2.3" } }, "sha512-0vIVR1jjBYOWrrDzGqpTmZJSKZ/VbP30npKw4YgErnCOyRNiFZgvjxbwf5LJa4ag7ZUYLh/vFMHW0Zd+pnaPZw=="],
-
     "@avsystem/openapi-ng-website": ["@avsystem/openapi-ng-website@workspace:website"],
-
-    "@avsystem/openapi-ng-win32-arm64-msvc": ["@avsystem/openapi-ng-win32-arm64-msvc@0.5.1", "", { "os": "win32", "cpu": "arm64" }, "sha512-a+iUKZ2Litf0Cka+BaOKkGTeOQHoZsNmm1FG5vF9rAjb9n8mBfnKBZaeZHe6fZ1Z0Eh0uptKOv+KDcVSNkZm/Q=="],
-
-    "@avsystem/openapi-ng-win32-x64-msvc": ["@avsystem/openapi-ng-win32-x64-msvc@0.5.1", "", { "os": "win32", "cpu": "x64" }, "sha512-tkfCdDbOhwDu3jRWTNklh8LZfwX7WIy/ZYEd5UvID+l1KlLy7AFTHT5of+uyqv0gwaXIkqj+I99YXiLdZJPrzQ=="],
 
     "@babel/helper-string-parser": ["@babel/helper-string-parser@7.29.7", "", {}, "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="],
 

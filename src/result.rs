@@ -65,10 +65,4 @@ impl GeneratedArtifact {
   pub(crate) const fn new(path: String, contents: String) -> Self {
     Self { path, contents }
   }
-
-  /// Prefixes the do-not-edit banner onto the contents.
-  pub(crate) fn with_banner(mut self, banner: &str) -> Self {
-    self.contents.insert_str(0, banner);
-    self
-  }
 }

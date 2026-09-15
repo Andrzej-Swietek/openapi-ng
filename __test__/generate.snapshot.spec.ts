@@ -133,9 +133,12 @@ async function failurePayload(name: string, options: Partial<GenerateOptions> = 
   throw new Error(`Expected ${name} to fail.`);
 }
 
-for (const { fixture: fixtureName, pins } of SUCCESS_FIXTURES) {
-  test(`${fixtureName} snapshot: ${pins}`, async t => {
-    t.deepEqual(await successResult(fixtureName), hydrateSuccessSnapshot(fixtureName));
+for (const { fixture: fixtureName, label, pins, options } of SUCCESS_FIXTURES) {
+  test(`${label ?? fixtureName} snapshot: ${pins}`, async t => {
+    t.deepEqual(
+      await successResult(fixtureName, options ?? {}),
+      hydrateSuccessSnapshot(label ?? fixtureName),
+    );
   });
 }
 
@@ -177,12 +180,10 @@ test('snapshot artifacts type-check under tsc --noEmit', t => {
     hydrateStaticTemplate().artifacts;
 
   const includeGlobs: string[] = [];
-  for (const { fixture: fixtureName } of SUCCESS_FIXTURES) {
-    const snap = hydrateSuccessSnapshot(fixtureName);
-    const fixtureDir = path.join(
-      compileRoot,
-      fixtureName.replace(/[^a-zA-Z0-9_-]+/g, '_'),
-    );
+  for (const { fixture: fixtureName, label } of SUCCESS_FIXTURES) {
+    const name = label ?? fixtureName;
+    const snap = hydrateSuccessSnapshot(name);
+    const fixtureDir = path.join(compileRoot, name.replace(/[^a-zA-Z0-9_-]+/g, '_'));
     fs.mkdirSync(fixtureDir, { recursive: true });
 
     for (const artifact of snap.artifacts) {
@@ -194,7 +195,7 @@ test('snapshot artifacts type-check under tsc --noEmit', t => {
           ? artifact.contents
           : staticArtifacts.find(a => a.path === artifact.path)?.contents;
       if (contents === undefined) {
-        t.fail(`Missing contents for ${artifact.path} in ${fixtureName}`);
+        t.fail(`Missing contents for ${artifact.path} in ${label}`);
         return;
       }
       const filePath = path.join(fixtureDir, artifact.path);

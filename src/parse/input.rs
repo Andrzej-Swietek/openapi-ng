@@ -162,16 +162,24 @@ fn decode_failure(message: &str, display_path: &Rc<str>) -> Diagnostic {
   )
 }
 
-/// Field path `serde_yml` prefixes onto an error raised while deserialising
-/// `components.schemas`.
-const SCHEMAS_FIELD_PATH: &str = "components.schemas";
+/// Field path `serde_yml` prefixes onto an error raised on the
+/// `components.schemas` map itself. The trailing `: ` keeps a nested path
+/// such as `components.schemas.Pet.properties` out.
+const SCHEMAS_FIELD_PATH: &str = "components.schemas: ";
 
 /// Rejects a source whose YAML aliases expand far beyond its own size,
-/// measured by re-serialising the node tree. A source this cannot parse
-/// passes, leaving the typed parse to report the error.
+/// measured by re-serialising the node tree.
+///
+/// A duplicate mapping key fails here: `Value` rejects one where the typed
+/// parse accepts it last-wins inside its `serde_json::Value` fields. Any
+/// other parse error passes, leaving the typed parse to report it.
 fn check_anchor_expansion(source: &str, display_path: &Rc<str>) -> Result<(), Diagnostic> {
-  let Ok(value) = serde_yml::from_str::<serde_yml::Value>(source) else {
-    return Ok(());
+  let value = match serde_yml::from_str::<serde_yml::Value>(source) {
+    Ok(value) => value,
+    Err(error) if error.to_string().contains(DUPLICATE_KEY) => {
+      return Err(decode_failure(&error.to_string(), display_path));
+    }
+    Err(_) => return Ok(()),
   };
   let Ok(expanded) = serde_yml::to_string(&value) else {
     return Ok(());

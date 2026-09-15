@@ -1,7 +1,8 @@
 use crate::api_model::canonical::ResponseContent;
-use crate::emit::ts::{Doc, Position, Render, Writer, jsdoc, w};
+use crate::emit::ts::{Doc, Position, Render, Writer, jsdoc, type_reexport_line, w, wln};
 use crate::identifier::TypeName;
 use crate::plan::artifact_plan::{PlannedOperation, ServicePlan};
+use crate::plan::naming::service_file_stem;
 
 use super::imports::render_service_imports;
 use super::request::{
@@ -10,8 +11,9 @@ use super::request::{
 };
 
 pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
-  // Roughly 512 bytes per operation, over a floor covering the class
-  // header and the import block.
+  // Each operation produces ~512 bytes (request interface + factory
+  // triplet + URL/body construction); 2KB floor covers the @Injectable
+  // header + import block.
   let capacity = (service_plan.operations.len() * 512).max(2048);
   let mut buffer = Writer::with_capacity(capacity);
 
@@ -22,47 +24,117 @@ pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
   buffer.line("})");
   buffer.open_block(&format!("export class {}", service_plan.class_name));
 
-  service_plan.operations.iter().for_each(|operation| {
+  for operation in &service_plan.operations {
     buffer.blank_line();
-    render_operation_property(&mut buffer, operation);
-  });
+    render_operation_property(&mut buffer, operation, operation.request_interface.as_ref());
+  }
 
   buffer.close_block("");
 
-  // One operation's declarations stay contiguous, after the class.
+  // Per-operation tail: for each operation, emit its `{Pascal}Params`
+  // interface (when the operation has any inputs) followed by its
+  // `{Pascal}Error` interface (when it declares any 4xx/5xx with a JSON
+  // schema). Per-operation grouping beats kind-grouping when the file
+  // grows long — a reader searching for "UpdatePet" finds the property,
+  // its params, and its error map contiguously.
   for operation in &service_plan.operations {
-    if operation.request_interface.is_none() && operation.error_interface.is_none() {
+    let request_name = operation.request_interface.as_ref();
+    let has_errors = !operation.errors.is_empty();
+    if request_name.is_none() && !has_errors {
       continue;
     }
     buffer.blank_line();
-    if let Some(name) = &operation.request_interface {
+    if let Some(name) = request_name {
       render_request_interface(&mut buffer, operation, name);
     }
-    if let Some(name) = &operation.error_interface {
-      if operation.request_interface.is_some() {
+    if has_errors {
+      if request_name.is_some() {
         buffer.blank_line();
       }
-      render_error_interface(&mut buffer, operation, name);
+      if let Some(error_name) = &operation.error_interface {
+        render_error_interface(&mut buffer, operation, error_name);
+      }
     }
   }
 
   buffer.into_string()
 }
 
-fn render_operation_property(buffer: &mut Writer, operation: &PlannedOperation<'_>) {
+/// Class for the `services` + `operations` layout: one `withInjector()` line per operation, plus type
+/// re-exports so `import type { ListPetsParams } from './rest/pet.rest'`
+/// resolves the same way it does under `services`.
+pub(crate) fn emit_bound_service(service_plan: &ServicePlan<'_>) -> String {
+  // The barrel `rest/<group>/index.ts` is imported by its directory.
+  let specifier = format!("./{}", service_file_stem(&service_plan.group_name));
+  let mut buffer = Writer::with_capacity((service_plan.operations.len() * 96).max(512));
+
+  buffer.line("import { Injectable } from '@angular/core';");
+  wln!(buffer, "import * as ops from '{specifier}';");
+  buffer.blank_line();
+  buffer.line("@Injectable({");
+  buffer.line("  providedIn: 'root',");
+  buffer.line("})");
+  buffer.open_block(&format!("export class {}", service_plan.class_name));
+
+  // One-liners stay contiguous; a blank line separates documented
+  // properties from their neighbours.
+  let mut previous_documented = false;
+  for (index, operation) in service_plan.operations.iter().enumerate() {
+    let documented = !Doc::new(operation.description.as_deref(), operation.deprecated).is_empty();
+    if index > 0 && (documented || previous_documented) {
+      buffer.blank_line();
+    }
+    jsdoc(
+      &mut buffer,
+      Doc::new(operation.description.as_deref(), operation.deprecated),
+    );
+    let name = &operation.method_name;
+    wln!(buffer, "readonly {name} = ops.{name}.withInjector();");
+    previous_documented = documented;
+  }
+  buffer.close_block("");
+
+  // Params before Error, per operation, in class order.
+  let reexports: Vec<&str> = service_plan
+    .operations
+    .iter()
+    .flat_map(|operation| {
+      [
+        operation.request_interface.as_ref(),
+        operation.error_interface.as_ref(),
+      ]
+    })
+    .flatten()
+    .map(TypeName::as_str)
+    .collect();
+  if !reexports.is_empty() {
+    buffer.blank_line();
+    type_reexport_line(
+      &mut buffer,
+      reexports.iter().map(|name| (*name, *name)),
+      &specifier,
+    );
+  }
+
+  buffer.into_string()
+}
+
+fn render_operation_property(
+  buffer: &mut Writer,
+  operation: &PlannedOperation<'_>,
+  request_name: Option<&TypeName>,
+) {
+  let property_name = &operation.method_name;
+
   jsdoc(
     buffer,
     Doc::new(operation.description.as_deref(), operation.deprecated),
   );
-  w!(buffer, "readonly {} = ", operation.method_name);
-  write_response_call_site(
-    buffer,
-    operation.response,
-    operation.request_interface.as_ref(),
-  );
+  w!(buffer, "readonly {property_name} = ");
+  write_call_site(buffer, "requestFactory", operation.response, request_name);
   buffer.push("(\n");
   buffer.indent();
-  match &operation.request_interface {
+  match request_name {
     Some(name) => render_requestful_builder(buffer, operation, name),
     None => render_zero_arg_builder(buffer, operation),
   }
@@ -70,10 +142,12 @@ fn render_operation_property(buffer: &mut Writer, operation: &PlannedOperation<'
   buffer.line(");");
 }
 
-/// Writes the `requestFactory` call prefix the operation's arity and
-/// response variant select.
-fn write_response_call_site(
+// Helper call prefix: `factory` is `requestFactory` or `defineOperation`;
+// arity and response variant pick `.zeroArg` / `.blob` / `.text` /
+// `.arrayBuffer`, so the runtime never probes `reqFn.length`.
+pub(super) fn write_call_site(
   buffer: &mut Writer,
+  factory: &str,
   response: Option<&ResponseContent>,
   request_name: Option<&TypeName>,
 ) {
@@ -86,18 +160,18 @@ fn write_response_call_site(
 
   match (variant, request_name) {
     (Some(kind), Some(request)) => {
-      w!(buffer, "requestFactory.{kind}<{request}>");
+      w!(buffer, "{factory}.{kind}<{request}>");
     }
     (Some(kind), None) => {
-      w!(buffer, "requestFactory.zeroArg.{kind}");
+      w!(buffer, "{factory}.zeroArg.{kind}");
     }
     (None, Some(request)) => {
-      w!(buffer, "requestFactory<{request}, ");
+      w!(buffer, "{factory}<{request}, ");
       write_response_type(buffer, response);
       buffer.push(">");
     }
     (None, None) => {
-      buffer.push("requestFactory.zeroArg<");
+      w!(buffer, "{factory}.zeroArg<");
       write_response_type(buffer, response);
       buffer.push(">");
     }
@@ -106,8 +180,8 @@ fn write_response_call_site(
 
 fn write_response_type(buffer: &mut Writer, response: Option<&ResponseContent>) {
   match response {
-    Some(ResponseContent::Json(Some(schema))) => {
-      schema.render(buffer, Position::Standalone);
+    Some(ResponseContent::Json(Some(ty))) => {
+      ty.render(buffer, Position::Standalone);
     }
     Some(ResponseContent::Json(None)) | None => {
       buffer.push("void");
@@ -121,10 +195,11 @@ fn write_response_type(buffer: &mut Writer, response: Option<&ResponseContent>) 
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::api_model::canonical::ErrorResponse;
   use crate::api_model::canonical::{HttpMethod, ResponseContent};
   use crate::api_model::schema::{SchemaScalar, SchemaType};
-  use crate::plan::artifact_plan::PlannedRequestContract;
-  use crate::test_support::{op_with, path_field, string_schema};
+  use crate::plan::artifact_plan::{PlannedRequestContract, ServicePlan};
+  use crate::test_support::{empty_request, op_with, path_field, string_schema};
 
   // The four tests below pin the helper expression emitted by
   // render_operation_property across every ResponseContent variant.
@@ -132,15 +207,16 @@ mod tests {
   // use the static-method variant (requestFactory.blob<Req>(…) etc.) —
   // no Response generic and no { responseKind: '…' } option line.
 
-  fn render_property(op: &PlannedOperation<'_>) -> String {
+  fn render_property(op: &PlannedOperation<'_>, request_name: &str) -> String {
     let mut buf = Writer::with_capacity(512);
-    render_operation_property(&mut buf, op);
+    let owned = TypeName::new(request_name.to_string());
+    render_operation_property(&mut buf, op, Some(&owned));
     buf.into_string()
   }
 
   fn op_with_response_and_path<'a>(
     method_name: &str,
-    path_ty: &'a SchemaType,
+    path_schema: &'a SchemaType,
     response: &'a ResponseContent,
   ) -> PlannedOperation<'a> {
     op_with(
@@ -148,7 +224,7 @@ mod tests {
       HttpMethod::Get,
       "/x/{id}",
       PlannedRequestContract {
-        fields: vec![path_field("id", path_ty)],
+        fields: vec![path_field("id", path_schema)],
         headers: vec![],
         body: None,
       },
@@ -161,7 +237,7 @@ mod tests {
     let str_schema = string_schema();
     let json = ResponseContent::Json(Some(SchemaType::Scalar(SchemaScalar::String)));
     let op = op_with_response_and_path("listPets", &str_schema, &json);
-    let out = render_property(&op);
+    let out = render_property(&op, "ListPetsParams");
 
     assert!(
       out.contains("requestFactory<ListPetsParams, string>"),
@@ -183,7 +259,7 @@ mod tests {
   fn request_factory_call_uses_blob_variant_for_blob_response() {
     let str_schema = string_schema();
     let op = op_with_response_and_path("download", &str_schema, &ResponseContent::Blob);
-    let out = render_property(&op);
+    let out = render_property(&op, "DownloadParams");
 
     assert!(
       out.contains("requestFactory.blob<DownloadParams>"),
@@ -203,7 +279,7 @@ mod tests {
   fn request_factory_call_uses_text_variant_for_text_response() {
     let str_schema = string_schema();
     let op = op_with_response_and_path("rawConfig", &str_schema, &ResponseContent::Text);
-    let out = render_property(&op);
+    let out = render_property(&op, "RawConfigParams");
 
     assert!(
       out.contains("requestFactory.text<RawConfigParams>"),
@@ -223,7 +299,7 @@ mod tests {
   fn request_factory_call_uses_array_buffer_variant_for_array_buffer_response() {
     let str_schema = string_schema();
     let op = op_with_response_and_path("fetch", &str_schema, &ResponseContent::ArrayBuffer);
-    let out = render_property(&op);
+    let out = render_property(&op, "FetchParams");
 
     assert!(
       out.contains("requestFactory.arrayBuffer<FetchParams>"),
@@ -263,7 +339,7 @@ mod tests {
 
   fn render_zero_arg_property(op: &PlannedOperation<'_>) -> String {
     let mut buf = Writer::with_capacity(512);
-    render_operation_property(&mut buf, op);
+    render_operation_property(&mut buf, op, None);
     buf.into_string()
   }
 
@@ -309,6 +385,61 @@ mod tests {
     assert!(
       out.contains("requestFactory.zeroArg.arrayBuffer"),
       "expected requestFactory.zeroArg.arrayBuffer(…) for zero-arg arrayBuffer, got:\n{out}"
+    );
+  }
+
+  #[test]
+  fn bound_service_groups_documented_properties_and_reexports_types() {
+    let str_schema = string_schema();
+    let json = ResponseContent::Json(Some(SchemaType::Scalar(SchemaScalar::String)));
+    let not_found = [ErrorResponse {
+      status: 404,
+      body: SchemaType::Scalar(SchemaScalar::String),
+    }];
+    let mut get_pet = op_with_response_and_path("getPet", &str_schema, &json);
+    get_pet.errors = &not_found;
+    get_pet.error_interface = Some(crate::plan::naming::error_interface_name(
+      &get_pet.method_name,
+    ));
+    let mut list_pets = op_with(
+      "listPets",
+      HttpMethod::Get,
+      "/pets",
+      empty_request(),
+      Some(&json),
+    );
+    list_pets.description = Some("List pets.".to_string());
+    let ping = op_with("ping", HttpMethod::Get, "/ping", empty_request(), None);
+    let plan = ServicePlan {
+      group_name: "pet".to_string(),
+      class_name: TypeName::new("PetRest".to_string()),
+      artifact_path: "rest/pet.rest.ts".to_string(),
+      operations_barrel_path: Some("rest/pet/index.ts".to_string()),
+      operations: vec![get_pet, list_pets, ping],
+    };
+
+    let out = emit_bound_service(&plan);
+
+    assert_eq!(
+      out,
+      "import { Injectable } from '@angular/core';\n\
+       import * as ops from './pet';\n\
+       \n\
+       @Injectable({\n\
+      \x20 providedIn: 'root',\n\
+       })\n\
+       export class PetRest {\n\
+      \x20 readonly getPet = ops.getPet.withInjector();\n\
+       \n\
+      \x20 /**\n\
+      \x20  * List pets.\n\
+      \x20  */\n\
+      \x20 readonly listPets = ops.listPets.withInjector();\n\
+       \n\
+      \x20 readonly ping = ops.ping.withInjector();\n\
+       }\n\
+       \n\
+       export type { GetPetParams, GetPetError } from './pet';\n"
     );
   }
 }

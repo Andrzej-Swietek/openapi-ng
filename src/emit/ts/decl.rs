@@ -34,7 +34,7 @@ impl<'a> Doc<'a> {
       .filter(|text| !text.is_empty())
   }
 
-  fn is_empty(self) -> bool {
+  pub(crate) fn is_empty(self) -> bool {
     self.prose().is_none() && !self.deprecated
   }
 }

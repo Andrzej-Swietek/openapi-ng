@@ -63,6 +63,11 @@ export interface GenerateOptions {
    */
   responseTypeMapping?: Array<ResponseTypeMapping>
   naming?: NamingConfig
+  /**
+   * Angular output layouts. Defaults to `['services']`; only meaningful
+   * with the `angular` emit target.
+   */
+  layout?: Array<Layout>
 }
 
 export interface GenerateResult {
@@ -108,6 +113,17 @@ export type InputFormat = 'json' | 'yaml';
 export declare const InputFormat: {
   readonly Json: 'json';
   readonly Yaml: 'yaml';
+};
+
+/**
+ * One Angular output layout: the per-tag class (`services`) or one file
+ * per operation plus a barrel (`operations`). Listing both emits the
+ * classes on top of the operation files.
+ */
+export type Layout = 'services' | 'operations';
+export declare const Layout: {
+  readonly Services: 'services';
+  readonly Operations: 'operations';
 };
 
 /**
@@ -231,6 +247,7 @@ export type DiagnosticSubcode =
   | 'operation-cap-exceeded'
   | 'mapping-expansion-exceeded'
   | 'naming-resolution'
+  | 'reserved-identifier'
   | 'multi-content-body'
   | 'unsupported-body-content-type'
   | 'multipart-nested-object'
@@ -314,6 +331,7 @@ export interface Config {
   mappedTypes?: Array<MappedType>;
   responseTypeMapping?: Array<ResponseTypeMapping>;
   naming?: NamingConfig;
+  layout?: Array<Layout>;
 }
 
 /**

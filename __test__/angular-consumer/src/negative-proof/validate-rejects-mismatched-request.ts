@@ -1,7 +1,7 @@
 // Must not compile: `validateRest`'s `request` callback stays pinned to
 // the endpoint's request shape.
 import { schema } from '@angular/forms/signals';
-import type { PetRest } from '../../generated/rest/pet.rest.generated';
+import type { PetRest } from '../../generated/rest/pet.rest';
 import { validateRest } from '../../generated/rest.validate';
 
 declare const service: PetRest;

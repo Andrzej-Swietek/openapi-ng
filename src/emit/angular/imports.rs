@@ -2,12 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::api_model::canonical::ResponseContent;
 use crate::api_model::schema::{SchemaType, collect_type_references};
-use crate::emit::ts::{Writer, type_import_block};
+use crate::emit::ts::{Writer, type_import_block, wln};
 use crate::plan::artifact_plan::{PlannedOperation, PlannedRequestBody, RequestFieldKind};
 
-/// Path from a generated service file to the model artifact, one
+/// Path from a generated service file to the sibling `model.ts`, one
 /// directory above it.
-const MODEL_IMPORT_PATH: &str = "../model.generated";
+const MODEL_IMPORT_PATH: &str = "../model";
 
 pub(super) fn render_service_imports(
   buffer: &mut Writer,
@@ -15,33 +15,50 @@ pub(super) fn render_service_imports(
   helper_import_path: &str,
 ) {
   buffer.line("import { Injectable } from '@angular/core';");
+  let helper_symbols: &[&str] = if uses_http_params(operations) {
+    &["httpParams", "requestFactory"]
+  } else {
+    &["requestFactory"]
+  };
+  write_helper_import(buffer, helper_import_path, helper_symbols);
+  write_model_imports(
+    buffer,
+    &collect_model_type_imports(operations),
+    MODEL_IMPORT_PATH,
+  );
+}
 
-  let uses_http_params = operations.iter().any(|operation| {
+pub(super) fn uses_http_params(operations: &[PlannedOperation<'_>]) -> bool {
+  operations.iter().any(|operation| {
     operation
       .request
       .fields
       .iter()
       .any(|field| field.kind == RequestFieldKind::Query)
-  });
-  let helper_import = if uses_http_params {
-    format!("import {{ httpParams, requestFactory }} from '{helper_import_path}';")
-  } else {
-    format!("import {{ requestFactory }} from '{helper_import_path}';")
-  };
-  buffer.line(&helper_import);
+  })
+}
 
-  let imports: BTreeSet<&str> =
-    operations
-      .iter()
-      .flat_map(operation_types)
-      .fold(BTreeSet::new(), |mut imports, schema| {
-        collect_type_references(schema, &mut imports);
-        imports
-      });
+pub(super) fn write_helper_import(buffer: &mut Writer, path: &str, symbols: &[&str]) {
+  wln!(buffer, "import {{ {} }} from '{path}';", symbols.join(", "));
+}
 
+pub(super) fn write_model_imports(buffer: &mut Writer, imports: &BTreeSet<&str>, path: &str) {
   if !imports.is_empty() {
-    type_import_block(buffer, &BTreeMap::from([(MODEL_IMPORT_PATH, imports)]));
+    type_import_block(buffer, &BTreeMap::from([(path, imports.clone())]));
   }
+}
+
+/// Every user-declared schema name the operations reference, sorted.
+pub(super) fn collect_model_type_imports<'a>(
+  operations: &'a [PlannedOperation<'a>],
+) -> BTreeSet<&'a str> {
+  operations
+    .iter()
+    .flat_map(operation_types)
+    .fold(BTreeSet::new(), |mut imports, schema| {
+      collect_type_references(schema, &mut imports);
+      imports
+    })
 }
 
 /// Every model type an operation names. A form body and a non-JSON
@@ -96,6 +113,8 @@ mod tests {
     buf.into_string()
   }
 
+  // ── Fixed-position imports (HttpClient, Angular core, helpers) ─────────────
+
   #[test]
   fn always_imports_injectable() {
     let out = render(&[op_with(
@@ -139,6 +158,8 @@ mod tests {
     assert!(out.contains("import { httpParams, requestFactory } from '../rest.util';"));
   }
 
+  // ── Model-ref import dedup ────────────────────────────────────────────────
+
   #[test]
   fn model_refs_are_deduplicated_across_operations() {
     let pet_ref = SchemaType::Ref("Pet".into());
@@ -163,7 +184,7 @@ mod tests {
     );
     let out = render(&[op_a, op_b]);
     // The single import line lists `Pet` exactly once.
-    assert!(out.contains("import type { Pet } from '../model.generated';"));
+    assert!(out.contains("import type { Pet } from '../model';"));
     assert_eq!(out.matches("Pet").count(), 1);
   }
 
@@ -180,8 +201,10 @@ mod tests {
       body: None,
     };
     let out = render(&[op_with("createPet", HttpMethod::Get, "/x", request, None)]);
-    assert!(out.contains("import type { IdempotencyKey } from '../model.generated';"));
+    assert!(out.contains("import type { IdempotencyKey } from '../model';"));
   }
+
+  // ── Body imports under smart-flatten ──────────────────────────────────────
 
   #[test]
   fn nested_body_named_ref_is_imported() {
@@ -192,7 +215,7 @@ mod tests {
       body: Some(nested_body(&payload_ref, false)),
     };
     let out = render(&[op_with("createPet", HttpMethod::Post, "/x", request, None)]);
-    assert!(out.contains("import type { CreatePetPayload } from '../model.generated';"));
+    assert!(out.contains("import type { CreatePetPayload } from '../model';"));
   }
 
   #[test]
@@ -210,7 +233,7 @@ mod tests {
       )),
     };
     let out = render(&[op_with("createPet", HttpMethod::Post, "/x", request, None)]);
-    assert!(out.contains("import type { PetStatus } from '../model.generated';"));
+    assert!(out.contains("import type { PetStatus } from '../model';"));
   }
 
   #[test]
@@ -229,9 +252,11 @@ mod tests {
       request,
       Some(&pet_response),
     )]);
-    assert!(out.contains("import type { Pet } from '../model.generated';"));
+    assert!(out.contains("import type { Pet } from '../model';"));
     assert_eq!(out.matches("Pet").count(), 1);
   }
+
+  // ── empty operation set ───────────────────────────────────────────────────
 
   #[test]
   fn empty_operation_set_emits_only_fixed_imports() {
@@ -240,6 +265,6 @@ mod tests {
     assert!(out.contains("requestFactory"));
     assert!(!out.contains("HttpClient"));
     assert!(!out.contains("httpParams"));
-    assert!(!out.contains("../model.generated"));
+    assert!(!out.contains("../model"));
   }
 }

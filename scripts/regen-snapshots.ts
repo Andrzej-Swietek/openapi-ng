@@ -156,10 +156,10 @@ function run(
 assertEveryFixtureIsClassified();
 
 let staticTemplatesWritten = false;
-for (const { fixture } of SUCCESS_FIXTURES) {
+for (const { fixture, label, options } of SUCCESS_FIXTURES) {
   let result;
   try {
-    result = await run(fixture);
+    result = await run(fixture, options);
   } catch (error) {
     console.error(
       `FAIL: ${fixture} was expected to generate but failed with ` +
@@ -172,7 +172,7 @@ for (const { fixture } of SUCCESS_FIXTURES) {
     writeStaticTemplates(result);
     staticTemplatesWritten = true;
   }
-  writeSuccessSnapshot(fixture, result);
+  writeSuccessSnapshot(label ?? fixture, result);
 }
 
 for (const { fixture, snapshot, options } of FAILURE_FIXTURES) {

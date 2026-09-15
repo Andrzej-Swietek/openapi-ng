@@ -19,7 +19,7 @@
       "path": "rest.validate.ts"
     },
     {
-      "path": "rest/pets.rest.generated.ts"
+      "path": "rest/pets.rest.ts"
     }
   ]
 }

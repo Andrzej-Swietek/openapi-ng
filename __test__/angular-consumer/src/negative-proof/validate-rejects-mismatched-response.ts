@@ -1,8 +1,8 @@
 // Must not compile: `onSuccess`'s `result` stays typed as the endpoint's
 // response.
 import { schema } from '@angular/forms/signals';
-import type { PetRest, UpdatePetParams } from '../../generated/rest/pet.rest.generated';
-import type { Pet } from '../../generated/model.generated.ts';
+import type { PetRest, UpdatePetParams } from '../../generated/rest/pet.rest';
+import type { Pet } from '../../generated/model.ts';
 import { validateRest } from '../../generated/rest.validate';
 
 declare const service: PetRest;

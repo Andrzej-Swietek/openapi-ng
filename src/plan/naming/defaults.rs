@@ -28,10 +28,13 @@ pub(crate) fn default_method_name(
 /// PascalCase of the first tag; failing that, of the first path segment;
 /// failing that, `Default`.
 pub(crate) fn default_group(ctx: &OperationContext<'_>) -> String {
+  // Tags are copied from the spec unfiltered, so an empty one must fall
+  // through to the path segment rather than short-circuit to `Default`.
   ctx
     .tags()
     .first()
     .map(String::as_str)
+    .filter(|tag| !tag.is_empty())
     .or_else(|| ctx.lookup_indexed("pathSegments", 0))
     .filter(|source| !source.is_empty())
     .map_or_else(
@@ -97,6 +100,13 @@ mod tests {
     let operation = op("x", HttpMethod::Get, "/users/{id}", &[]);
     let ctx = OperationContext::from_operation(&operation);
     assert_eq!(default_group(&ctx), "Users");
+  }
+
+  #[test]
+  fn default_group_falls_back_to_path_segment_when_the_first_tag_is_empty() {
+    let operation = op("x", HttpMethod::Get, "/pets", &[""]);
+    let ctx = OperationContext::from_operation(&operation);
+    assert_eq!(default_group(&ctx), "Pets");
   }
 
   #[test]

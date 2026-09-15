@@ -96,7 +96,9 @@ fn native_binding<'a>(mapped: &'a ResolvedMappedType<'_>) -> &'a str {
 }
 
 /// True when the binding a mapped type introduces already equals the
-/// schema name it replaces, and the pair collapses to a single re-export.
+/// schema name it replaces. The usual `import type { Y as X }` plus
+/// `export type X = X;` would collide on `X`, so the pair collapses to a
+/// single re-export.
 fn is_self_alias(mapped: &ResolvedMappedType<'_>) -> bool {
   native_binding(mapped) == mapped.schema
 }
@@ -136,6 +138,6 @@ fn emit_mapped_imports(mapped_types: &[ResolvedMappedType<'_>], out: &mut Writer
     import_line(out, bindings, path, Statement::TypeImport);
   });
   reexports.iter().for_each(|(path, entries)| {
-    type_reexport_line(out, entries, path);
+    type_reexport_line(out, entries.iter().copied(), path);
   });
 }

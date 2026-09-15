@@ -13,8 +13,17 @@ pub(crate) fn service_file_stem(group: &str) -> String {
   apply_case(group, Case::Kebab)
 }
 
+/// Kebab-case file stem for a standalone operation file, e.g. `listPets`
+/// → `list-pets`.
+pub(crate) fn operation_file_stem(method_name: &str) -> String {
+  apply_case(method_name, Case::Kebab)
+}
+
 /// PascalCase name of the interface carrying an operation's path, query,
 /// header and body fields, e.g. `listPets` → `ListPetsParams`.
+///
+/// Suffixed `Params`, not `Request`: a spec may already declare a schema
+/// named `<OperationId>Request`.
 pub(crate) fn request_interface_name(method_name: &MethodName) -> TypeName {
   TypeName::new(format!(
     "{}Params",

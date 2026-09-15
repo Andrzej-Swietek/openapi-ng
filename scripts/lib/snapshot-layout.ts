@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { GenerateOptions } from '../../index.js';
+import type { GenerateOptions, Layout } from '../../index.js';
 
 /** The do-not-edit banner, stripped from every stored artifact. */
 export const BANNER_RE =
@@ -34,6 +34,10 @@ export interface SuccessFixture {
   readonly fixture: string;
   /** What this snapshot proves, in the terms a failing diff should be read in. */
   readonly pins: string;
+  /** Snapshot file stem, when one fixture is pinned under several options. */
+  readonly label?: string;
+  /** Options the default run does not pass. */
+  readonly options?: Partial<GenerateOptions>;
 }
 
 /** A fixture whose failure is pinned. */
@@ -45,6 +49,38 @@ export interface FailureFixture extends SuccessFixture {
 }
 
 export const SUCCESS_FIXTURES: readonly SuccessFixture[] = [
+  {
+    fixture: 'default-method-name.openapi.yaml',
+    pins: "a methodName of 'default' is fine under the services layout",
+  },
+  {
+    fixture: 'index-method-name.openapi.yaml',
+    pins: "a methodName of 'index' does not collide with the operations barrel",
+  },
+  {
+    fixture: 'petstore-rich.openapi.yaml',
+    label: 'petstore-rich.openapi.yaml.layout-operations',
+    options: { layout: ['operations'] satisfies Layout[] },
+    pins: 'one file per operation plus a barrel, with no service class',
+  },
+  {
+    fixture: 'petstore-rich.openapi.yaml',
+    label: 'petstore-rich.openapi.yaml.layout-services-operations',
+    options: { layout: ['services', 'operations'] satisfies Layout[] },
+    pins: 'the class binds the operation files instead of inlining builders',
+  },
+  {
+    fixture: 'header-param.openapi.yaml',
+    label: 'header-param.openapi.yaml.layout-operations',
+    options: { layout: ['operations'] satisfies Layout[] },
+    pins: 'header parameters survive the standalone-operation layout',
+  },
+  {
+    fixture: 'reserved-method-name.openapi.yaml',
+    label: 'reserved-method-name.openapi.yaml.layout-services-operations',
+    options: { layout: ['services', 'operations'] satisfies Layout[] },
+    pins: 'a method name that cannot be a const binding is aliased on export',
+  },
   { fixture: 'additional-properties.openapi.yaml', pins: 'additionalProperties as Record<string, T>' },
   {
     fixture: 'additional-properties-false.openapi.yaml',
@@ -133,6 +169,18 @@ export const SUCCESS_FIXTURES: readonly SuccessFixture[] = [
 ];
 
 export const FAILURE_FIXTURES: readonly FailureFixture[] = [
+  {
+    fixture: 'default-method-name.openapi.yaml',
+    options: { layout: ['operations'] satisfies Layout[] },
+    snapshot: 'default-method-name.openapi.yaml.layout-operations.failure.json',
+    pins: "'default' cannot name a standalone operation the barrel re-exports",
+  },
+  {
+    fixture: 'index-method-name.openapi.yaml',
+    options: { layout: ['operations'] satisfies Layout[] },
+    snapshot: 'index-method-name.openapi.yaml.layout-operations.failure.json',
+    pins: "'index' would overwrite the operations barrel",
+  },
   { fixture: 'additional-properties-boolean.openapi.yaml', pins: '`additionalProperties: true` is rejected' },
   { fixture: 'anchor-fanout.openapi.yaml', pins: 'the reject side of the expansion cap' },
   { fixture: 'body-content-type-xml.openapi.yaml', pins: 'an unsupported body content type' },

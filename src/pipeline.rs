@@ -2,7 +2,17 @@ use std::rc::Rc;
 
 use crate::{
   api_model::canonical::ApiModel,
-  emit::{emitters_for, render_generated_banner},
+  bindings::{EmitTarget, Layout},
+  emit::{
+    MODEL_ARTIFACT_PATH,
+    angular::{
+      REST_MODEL_PATH, REST_MODEL_TEMPLATE, REST_UTIL_PATH, REST_UTIL_TEMPLATE, REST_VALIDATE_PATH,
+      REST_VALIDATE_TEMPLATE, emit_bound_service, emit_operation, emit_operations_barrel,
+      emit_service,
+    },
+    model::emit_ts_models::emit_model,
+    render_generated_banner,
+  },
   error::{Diagnostic, Reporter},
   options::{GenerateConfig, validate_generate_config},
   plan::plan_generation,
@@ -99,13 +109,68 @@ fn run_pipeline(
   // One banner per run, prefixed onto every artifact.
   let banner = render_generated_banner(summary.normalized_source_path.as_str());
 
-  let artifacts: Vec<GeneratedArtifact> = config
-    .emit
-    .iter()
-    .flat_map(|target| emitters_for(*target))
-    .flat_map(|emitter| emitter.artifacts(&plan))
-    .map(|artifact| artifact.with_banner(&banner))
-    .collect();
+  // Canonical emit order: models → angular-rest support → per-tag
+  // services. `plan.services` is already class-name-sorted by
+  // `resolve_service_plans`, so artifact ordering is independent of
+  // operation insertion order.
+  let mut artifacts: Vec<GeneratedArtifact> = Vec::new();
+  if config.emit.contains(&EmitTarget::Models) && !ir.schemas.is_empty() {
+    let body = emit_model(&ir.schemas, &plan.mapped_types);
+    artifacts.push(GeneratedArtifact::new(
+      MODEL_ARTIFACT_PATH.to_string(),
+      format!("{banner}{body}"),
+    ));
+  }
+  if config.emit.contains(&EmitTarget::Angular) {
+    artifacts.push(GeneratedArtifact::new(
+      REST_MODEL_PATH.to_string(),
+      format!("{banner}{REST_MODEL_TEMPLATE}"),
+    ));
+    artifacts.push(GeneratedArtifact::new(
+      REST_UTIL_PATH.to_string(),
+      format!("{banner}{REST_UTIL_TEMPLATE}"),
+    ));
+    artifacts.push(GeneratedArtifact::new(
+      REST_VALIDATE_PATH.to_string(),
+      format!("{banner}{REST_VALIDATE_TEMPLATE}"),
+    ));
+    let standalone = config.layout.contains(&Layout::Operations);
+    let classes = config.layout.contains(&Layout::Services);
+    for service in &plan.services {
+      if standalone {
+        for operation in &service.operations {
+          let path = operation
+            .artifact_path
+            .clone()
+            .expect("operation artifact paths are planned for this layout");
+          let body = emit_operation(operation);
+          artifacts.push(GeneratedArtifact::new(path, format!("{banner}{body}")));
+        }
+        let barrel_path = service
+          .operations_barrel_path
+          .clone()
+          .expect("operations barrel is planned for this layout");
+        let barrel = emit_operations_barrel(service);
+        artifacts.push(GeneratedArtifact::new(
+          barrel_path,
+          format!("{banner}{barrel}"),
+        ));
+      }
+      if classes {
+        // With operation files present the class binds them instead of
+        // inlining its own builders.
+        let body = if standalone {
+          emit_bound_service(service)
+        } else {
+          emit_service(service)
+        };
+        artifacts.push(GeneratedArtifact::new(
+          service.artifact_path.clone(),
+          format!("{banner}{body}"),
+        ));
+      }
+    }
+  }
 
   crate::io::writer::write_generated_artifacts(
     config.output_path.as_deref(),
@@ -148,6 +213,7 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     }
   }
 
@@ -227,12 +293,9 @@ mod tests {
 
   #[test]
   fn generated_artifact_new_preserves_path_and_contents() {
-    let artifact = GeneratedArtifact::new(
-      "rest/pet.rest.generated.ts".to_string(),
-      "zażółć".to_string(),
-    );
+    let artifact = GeneratedArtifact::new("rest/pet.rest.ts".to_string(), "zażółć".to_string());
 
-    assert_eq!(artifact.path, "rest/pet.rest.generated.ts");
+    assert_eq!(artifact.path, "rest/pet.rest.ts");
     assert_eq!(artifact.contents, "zażółć");
   }
 
@@ -244,7 +307,7 @@ mod tests {
       std::rc::Rc::from("spec.yaml"),
     );
     let artifact = GeneratedArtifact::new(
-      "model.generated.ts".to_string(),
+      "model.ts".to_string(),
       "export interface Pet {}\n".to_string(),
     );
 
@@ -276,6 +339,7 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     })
     .expect("generation succeeds");
 
@@ -287,11 +351,11 @@ mod tests {
         .map(|artifact| artifact.path.as_str())
         .collect::<Vec<_>>(),
       vec![
-        "model.generated.ts",
+        "model.ts",
         "rest.model.ts",
         "rest.util.ts",
         "rest.validate.ts",
-        "rest/pet.rest.generated.ts",
+        "rest/pet.rest.ts",
       ]
     );
   }
@@ -311,6 +375,7 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     })
     .expect("generation succeeds");
 
@@ -342,23 +407,24 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     })
     .expect("generation succeeds");
 
     // Error interfaces live in the per-tag service file, so there is no
-    // `errors.generated.ts`.
+    // `errors.ts`.
     assert!(
       !result
         .artifacts
         .iter()
-        .any(|artifact| artifact.path == "errors.generated.ts"),
-      "errors.generated.ts must not be emitted as a standalone artifact",
+        .any(|artifact| artifact.path == "errors.ts"),
+      "errors.ts must not be emitted as a standalone artifact",
     );
 
     let service = result
       .artifacts
       .iter()
-      .find(|artifact| artifact.path == "rest/pet.rest.generated.ts")
+      .find(|artifact| artifact.path == "rest/pet.rest.ts")
       .expect("pet service emitted");
 
     assert!(service.contents.contains("export interface UpdatePetError"));
@@ -394,6 +460,7 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     };
     let result = execute_generate(config).expect("inputContents pipeline must succeed");
     assert_eq!(result.summary.title, "Inline Test");
@@ -419,6 +486,7 @@ mod tests {
       response_type_mapping: Vec::new(),
       naming_options: None,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: crate::options::default_layout(),
     })
     .expect("generation succeeds");
 
@@ -430,11 +498,11 @@ mod tests {
         .map(|artifact| artifact.path.as_str())
         .collect::<Vec<_>>(),
       vec![
-        "model.generated.ts",
+        "model.ts",
         "rest.model.ts",
         "rest.util.ts",
         "rest.validate.ts",
-        "rest/pet.rest.generated.ts",
+        "rest/pet.rest.ts",
       ]
     );
   }

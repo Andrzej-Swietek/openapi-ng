@@ -1,8 +1,10 @@
 mod imports;
+mod operation;
 mod request;
 mod service;
 
-pub(crate) use service::emit_service;
+pub(crate) use operation::{emit_operation, emit_operations_barrel};
+pub(crate) use service::{emit_bound_service, emit_service};
 
 pub(crate) const REST_MODEL_PATH: &str = "rest.model.ts";
 pub(crate) const REST_UTIL_PATH: &str = "rest.util.ts";
@@ -44,7 +46,8 @@ mod tests {
     let plan = ServicePlan {
       group_name: "pet".into(),
       class_name: TypeName::new("PetRest".to_string()),
-      artifact_path: "rest/pet.rest.generated.ts".to_string(),
+      artifact_path: "rest/pet.rest.ts".to_string(),
+      operations_barrel_path: None,
       operations: vec![op_with(
         "listPets",
         HttpMethod::Get,
@@ -66,7 +69,8 @@ mod tests {
     let plan = ServicePlan {
       group_name: "pet".into(),
       class_name: TypeName::new("PetRest".to_string()),
-      artifact_path: "rest/pet.rest.generated.ts".to_string(),
+      artifact_path: "rest/pet.rest.ts".to_string(),
+      operations_barrel_path: None,
       operations: vec![op_with(
         "updatePet",
         HttpMethod::Put,

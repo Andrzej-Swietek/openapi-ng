@@ -28,14 +28,40 @@ pub(crate) fn group_operations<'a>(
       |mut groups, operation| {
         let group_name = resolver.group(operation, reporter)?;
         let method_name = resolver.method_name(operation, reporter)?;
-        groups
-          .entry(group_name)
-          .or_default()
-          .push((operation, method_name));
+        let members = groups.entry(group_name.clone()).or_default();
+        reject_duplicate_method_name(members, operation, &method_name, &group_name, reporter)?;
+        members.push((operation, method_name));
         Ok(groups)
       },
     )
     .map(|groups| groups.into_iter().collect())
+}
+
+/// Two operations with one method name would be two identically named class
+/// properties, or two operation files at the same path.
+fn reject_duplicate_method_name(
+  members: &[(&OperationDef, MethodName)],
+  operation: &OperationDef,
+  method_name: &MethodName,
+  group_name: &str,
+  reporter: &Reporter,
+) -> Result<(), Diagnostic> {
+  let Some((previous, _)) = members.iter().find(|(_, taken)| taken == method_name) else {
+    return Ok(());
+  };
+  Err(Diagnostic::policy_violation(
+    reporter,
+    "naming-resolution",
+    format!(
+      "methodName '{method_name}' resolves for both {} {} (operationId={}) and {} {} (operationId={}) in group '{group_name}'; adjust naming.methodName so they differ.",
+      previous.method,
+      previous.path,
+      previous.operation_id,
+      operation.method,
+      operation.path,
+      operation.operation_id,
+    ),
+  ))
 }
 
 #[cfg(test)]

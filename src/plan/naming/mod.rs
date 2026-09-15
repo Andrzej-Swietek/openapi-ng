@@ -12,8 +12,11 @@ mod parse_spec;
 mod template;
 
 pub use config::NamingConfig;
+#[cfg_attr(not(test), allow(unused_imports))]
+pub(crate) use config::{Naming, Rule, RuleEntry};
 pub(crate) use fixed::{
-  error_interface_name, request_interface_name, service_class_name, service_file_stem,
+  error_interface_name, operation_file_stem, request_interface_name, service_class_name,
+  service_file_stem,
 };
 pub(crate) use lower::lower;
 

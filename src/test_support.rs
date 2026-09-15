@@ -133,6 +133,7 @@ pub(crate) fn op_with<'a>(
     errors: &[],
     description: None,
     deprecated: false,
+    artifact_path: None,
   }
 }
 
@@ -154,6 +155,7 @@ pub(crate) fn op_with_errors<'a>(
     errors,
     description: None,
     deprecated: false,
+    artifact_path: None,
   }
 }
 

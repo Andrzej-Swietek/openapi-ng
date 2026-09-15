@@ -5,6 +5,7 @@ use std::rc::Rc;
 use proptest::prelude::*;
 
 use super::normalize_named_schema;
+use crate::api_model::normalize::MAX_NORMALIZE_DEPTH;
 use crate::error::{DiagnosticCode, Reporter};
 use crate::parse::openapi_model::Schema;
 
@@ -41,6 +42,23 @@ proptest! {
       );
     }
   }
+}
+
+#[test]
+fn nested_inline_objects_are_charged_one_level_each() {
+  // Arrays already covered the depth guard; inline objects descend through
+  // `normalize_properties`, which is where a double charge would hide.
+  let depth = usize::from(MAX_NORMALIZE_DEPTH) - 2;
+  let schema = (0..depth).fold(Schema::default_string(), |inner, _| {
+    Schema::wrap_object("child", inner)
+  });
+
+  let path: Rc<str> = Rc::from("test");
+  let reporter = Reporter::new(path);
+  assert!(
+    normalize_named_schema("Root", &schema, &reporter).is_ok(),
+    "{depth} nested inline objects must fit under a cap of {MAX_NORMALIZE_DEPTH}"
+  );
 }
 
 #[test]

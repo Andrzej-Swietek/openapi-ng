@@ -54,6 +54,25 @@ function rewrite(name: string, find: string, replace: string): Patch {
   };
 }
 
+/**
+ * Rewrites one `const enum` into a union plus an ambient const, which a
+ * consumer under `isolatedModules` can import.
+ */
+function constEnumRewrite(name: string, members: ReadonlyArray<readonly [string, string]>): Patch {
+  const body = members.map(([key, value]) => `\\s*${key} = '${value}'`).join(',');
+  const find = new RegExp(`export declare const enum ${name} \\{${body}\\s*\\}`);
+  const union = `export type ${name} = ${members.map(([, value]) => `'${value}'`).join(' | ')};`;
+  const replace = [
+    union,
+    `export declare const ${name}: {`,
+    ...members.map(([key, value]) => `  readonly ${key}: '${value}';`),
+    '};',
+  ].join('\n');
+  return rewritePattern(`${name} const-enum removal`, find, replace, source =>
+    source.includes(union),
+  );
+}
+
 /** Replaces the first match of `find`, or does nothing when `settled` holds. */
 function rewritePattern(
   name: string,
@@ -109,10 +128,6 @@ const NARROWED_DIAGNOSTIC = [
   ['  severity: string', "  severity: 'warning' | 'error'"],
 ] as const;
 
-const EMIT_TARGET_UNION = "export type EmitTarget = 'models' | 'angular';";
-const INPUT_FORMAT_UNION = "export type InputFormat = 'json' | 'yaml';";
-const RESPONSE_TYPE_UNION =
-  "export type ResponseType = 'json' | 'blob' | 'text' | 'arrayBuffer';";
 
 // `[^*]|\*(?!/)`, not `[\s\S]*?`: a lazy match runs past this
 // declaration's own `*/` and swallows the next block.
@@ -122,50 +137,24 @@ const dtsPatches: readonly Patch[] = [
   withinInterface('diagnostic narrowing', 'GeneratorDiagnostic', NARROWED_DIAGNOSTIC),
   withinInterface('error-payload narrowing', 'GenerateErrorPayload', NARROWED_DIAGNOSTIC.slice(0, 2)),
 
-  // A `const enum` in a published .d.ts is unimportable under
-  // isolatedModules. The union plus an ambient const keeps
-  // `EmitTarget.Models` working under a single-file transpile.
-  rewritePattern(
-    'EmitTarget const-enum removal',
-    /export declare const enum EmitTarget \{\s*Models = 'models',\s*Angular = 'angular'\s*\}/,
-    [
-      EMIT_TARGET_UNION,
-      'export declare const EmitTarget: {',
-      "  readonly Models: 'models';",
-      "  readonly Angular: 'angular';",
-      '};',
-    ].join('\n'),
-    source => source.includes(EMIT_TARGET_UNION),
-  ),
-
-  // Same const-enum problem as `EmitTarget`.
-  rewritePattern(
-    'InputFormat const-enum removal',
-    /export declare const enum InputFormat \{\s*Json = 'json',\s*Yaml = 'yaml'\s*\}/,
-    [
-      INPUT_FORMAT_UNION,
-      'export declare const InputFormat: {',
-      "  readonly Json: 'json';",
-      "  readonly Yaml: 'yaml';",
-      '};',
-    ].join('\n'),
-    source => source.includes(INPUT_FORMAT_UNION),
-  ),
-
-  rewritePattern(
-    'ResponseType const-enum removal',
-    /export declare const enum ResponseType \{\s*Json = 'json',\s*Blob = 'blob',\s*Text = 'text',\s*ArrayBuffer = 'arrayBuffer'\s*\}/,
-    [
-      RESPONSE_TYPE_UNION,
-      'export declare const ResponseType: {',
-      "  readonly Json: 'json';",
-      "  readonly Blob: 'blob';",
-      "  readonly Text: 'text';",
-      "  readonly ArrayBuffer: 'arrayBuffer';",
-      '};',
-    ].join('\n'),
-    source => source.includes(RESPONSE_TYPE_UNION),
-  ),
+  constEnumRewrite('EmitTarget', [
+    ['Models', 'models'],
+    ['Angular', 'angular'],
+  ]),
+  constEnumRewrite('InputFormat', [
+    ['Json', 'json'],
+    ['Yaml', 'yaml'],
+  ]),
+  constEnumRewrite('ResponseType', [
+    ['Json', 'json'],
+    ['Blob', 'blob'],
+    ['Text', 'text'],
+    ['ArrayBuffer', 'arrayBuffer'],
+  ]),
+  constEnumRewrite('Layout', [
+    ['Services', 'services'],
+    ['Operations', 'operations'],
+  ]),
 
   // The wrapper defaults `emit` before the boundary.
   rewrite('optional emit', 'emit: Array<EmitTarget>', 'emit?: Array<EmitTarget>'),

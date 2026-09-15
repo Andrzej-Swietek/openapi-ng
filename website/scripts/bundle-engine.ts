@@ -1,26 +1,47 @@
 #!/usr/bin/env bun
-// Pre-bundles the napi-rs WASI browser loader into public/playground-engine/
-// so the playground page can import it without Vite reaching into
-// node_modules internals.
+// Pre-bundles the napi-rs WASI browser loader so the page can import it from
+// /playground-engine/ without Vite processing node_modules internals. The
+// engine comes from the repo checkout, so the playground runs the commit it
+// is built from.
 
+import { build } from 'esbuild';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { build } from 'esbuild';
-
-const WASI_PACKAGE = '@avsystem/openapi-ng-wasm32-wasi';
-
-/** The worker specifier `napi artifacts` rewrites into the published loader. */
-const PACKAGE_WORKER_URL = `new URL('${WASI_PACKAGE}/wasi-worker-browser.mjs', import.meta.url)`;
-/** The specifier a local `napi build` emits instead. */
-const LOCAL_WORKER_URL = "new URL('./wasi-worker-browser.mjs', import.meta.url)";
-
 const require = createRequire(import.meta.url);
 const websiteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = path.resolve(websiteRoot, '..');
 const outDir = path.join(websiteRoot, 'public', 'playground-engine');
-const packageDir = path.dirname(require.resolve(`${WASI_PACKAGE}/package.json`));
+
+const LOADER_NAME = 'openapi-ng.wasi-browser.js';
+const WORKER_NAME = 'wasi-worker-browser.mjs';
+const WASM_NAME = 'openapi-ng.wasm32-wasi.wasm';
+
+const missing = [LOADER_NAME, WORKER_NAME, WASM_NAME].filter(
+  file => !fs.existsSync(path.join(repoRoot, file)),
+);
+if (missing.length > 0) {
+  throw new Error(
+    `bundle-engine: missing ${missing.join(', ')} at the repo root; run ` +
+      '`bun run build --target wasm32-wasip1-threads` there first.',
+  );
+}
+
+/** `napi build` emits the relative worker URL; `napi artifacts` rewrites it. */
+const PACKAGE_WORKER_URL = `new URL('@avsystem/openapi-ng-wasm32-wasi/${WORKER_NAME}', import.meta.url)`;
+const LOCAL_WORKER_URL = `new URL('./${WORKER_NAME}', import.meta.url)`;
+
+fs.rmSync(outDir, { recursive: true, force: true });
+fs.mkdirSync(outDir, { recursive: true });
+
+const loaderSource = fs.readFileSync(path.join(repoRoot, LOADER_NAME), 'utf8');
+if (!loaderSource.includes(PACKAGE_WORKER_URL) && !loaderSource.includes(LOCAL_WORKER_URL)) {
+  throw new Error(
+    'bundle-engine: worker URL in the WASI loader changed; update PACKAGE_WORKER_URL',
+  );
+}
 
 const shared = {
   bundle: true,
@@ -30,48 +51,27 @@ const shared = {
   minify: true,
 } as const;
 
-/**
- * Rewrites the loader's worker URL to the local one so both a published and
- * a locally built engine resolve the worker from the output directory.
- */
-function localiseWorkerUrl(source: string): string {
-  if (!source.includes(PACKAGE_WORKER_URL) && !source.includes(LOCAL_WORKER_URL)) {
-    throw new Error(
-      'bundle-engine: the worker URL in the WASI loader changed; update PACKAGE_WORKER_URL',
-    );
-  }
-  return source.replace(PACKAGE_WORKER_URL, LOCAL_WORKER_URL);
-}
-
-fs.rmSync(outDir, { recursive: true, force: true });
-fs.mkdirSync(outDir, { recursive: true });
-
-const loaderName = 'openapi-ng.wasi-browser.js';
-const loaderSource = fs.readFileSync(path.join(packageDir, loaderName), 'utf8');
-
 await Promise.all([
   build({
     ...shared,
     stdin: {
-      contents: localiseWorkerUrl(loaderSource),
-      resolveDir: packageDir,
-      sourcefile: loaderName,
+      contents: loaderSource.replace(PACKAGE_WORKER_URL, LOCAL_WORKER_URL),
+      resolveDir: repoRoot,
+      sourcefile: LOADER_NAME,
       loader: 'js',
     },
-    outfile: path.join(outDir, loaderName),
+    outfile: path.join(outDir, LOADER_NAME),
   }),
   build({
     ...shared,
-    entryPoints: [path.join(packageDir, 'wasi-worker-browser.mjs')],
-    outfile: path.join(outDir, 'wasi-worker-browser.mjs'),
+    entryPoints: [path.join(repoRoot, WORKER_NAME)],
+    outfile: path.join(outDir, WORKER_NAME),
   }),
 ]);
 
-fs.copyFileSync(
-  path.join(packageDir, 'openapi-ng.wasm32-wasi.wasm'),
-  path.join(outDir, 'openapi-ng.wasm32-wasi.wasm'),
-);
+fs.copyFileSync(path.join(repoRoot, WASM_NAME), path.join(outDir, WASM_NAME));
 
-const { version } = require(`${WASI_PACKAGE}/package.json`) as { version: string };
-fs.writeFileSync(path.join(outDir, 'version.json'), JSON.stringify({ version }));
-console.log(`bundle-engine: wrote ${outDir} (v${version})`);
+const { version } = require(path.join(repoRoot, 'package.json')) as { version: string };
+const tagged = version + (process.env.ENGINE_VERSION_SUFFIX ?? '');
+fs.writeFileSync(path.join(outDir, 'version.json'), JSON.stringify({ version: tagged }));
+console.log(`bundle-engine: wrote ${outDir} (v${tagged})`);

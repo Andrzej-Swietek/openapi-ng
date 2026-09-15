@@ -34,19 +34,19 @@
       "path": "rest.validate.ts"
     },
     {
-      "path": "rest/binary.rest.generated.ts"
+      "path": "rest/binary.rest.ts"
     },
     {
-      "path": "rest/config.rest.generated.ts"
+      "path": "rest/config.rest.ts"
     },
     {
-      "path": "rest/invoice.rest.generated.ts"
+      "path": "rest/invoice.rest.ts"
     },
     {
-      "path": "rest/pet.rest.generated.ts"
+      "path": "rest/pet.rest.ts"
     },
     {
-      "path": "rest/search.rest.generated.ts"
+      "path": "rest/search.rest.ts"
     }
   ]
 }

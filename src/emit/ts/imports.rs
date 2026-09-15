@@ -117,8 +117,12 @@ pub(crate) fn import_line<'a>(
 
 /// Emits `export type { … } from '…';`, dropping the rename where the
 /// exported name already matches the imported one.
-pub(crate) fn type_reexport_line(out: &mut Writer, entries: &BTreeSet<(&str, &str)>, path: &str) {
-  let bindings = entries.iter().map(|&(imported, exported)| {
+pub(crate) fn type_reexport_line<'a>(
+  out: &mut Writer,
+  entries: impl IntoIterator<Item = (&'a str, &'a str)>,
+  path: &str,
+) {
+  let bindings = entries.into_iter().map(|(imported, exported)| {
     if imported == exported {
       Binding::plain(imported)
     } else {

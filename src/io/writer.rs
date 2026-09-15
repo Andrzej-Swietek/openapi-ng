@@ -101,8 +101,8 @@ mod tests {
     let output_path = unique_path("artifact-writer-success");
     let ctx = test_reporter();
     let artifacts = vec![
-      artifact("model.generated.ts", "export interface Pet {}\n"),
-      artifact("rest/pet.rest.generated.ts", "export class PetService {}\n"),
+      artifact("model.ts", "export interface Pet {}\n"),
+      artifact("rest/pet.rest.ts", "export class PetService {}\n"),
     ];
 
     super::write_generated_artifacts(
@@ -113,12 +113,11 @@ mod tests {
     .expect("writer succeeds");
 
     assert_eq!(
-      fs::read_to_string(output_path.join("model.generated.ts"))
-        .expect("model artifact should exist"),
+      fs::read_to_string(output_path.join("model.ts")).expect("model artifact should exist"),
       "export interface Pet {}\n"
     );
     assert_eq!(
-      fs::read_to_string(output_path.join("rest/pet.rest.generated.ts"))
+      fs::read_to_string(output_path.join("rest/pet.rest.ts"))
         .expect("service artifact should exist"),
       "export class PetService {}\n"
     );
@@ -140,16 +139,13 @@ mod tests {
           .to_str()
           .expect("blocked output path should be utf-8"),
       ),
-      &[artifact(
-        "rest/pet.rest.generated.ts",
-        "export class PetService {}\n",
-      )],
+      &[artifact("rest/pet.rest.ts", "export class PetService {}\n")],
       &ctx,
     )
     .expect_err("writer should fail when parent directory cannot be created");
 
     assert_eq!(failure.code, crate::error::DiagnosticCode::WriteFailed);
-    assert!(failure.message.contains("rest/pet.rest.generated.ts"));
+    assert!(failure.message.contains("rest/pet.rest.ts"));
 
     let _ = fs::remove_dir_all(blocked_output_path);
   }

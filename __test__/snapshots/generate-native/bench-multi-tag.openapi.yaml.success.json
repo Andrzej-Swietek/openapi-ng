@@ -10,7 +10,7 @@
   "diagnostics": [],
   "artifacts": [
     {
-      "path": "model.generated.ts"
+      "path": "model.ts"
     },
     {
       "path": "rest.model.ts"
@@ -22,19 +22,19 @@
       "path": "rest.validate.ts"
     },
     {
-      "path": "rest/catalog.rest.generated.ts"
+      "path": "rest/catalog.rest.ts"
     },
     {
-      "path": "rest/customers.rest.generated.ts"
+      "path": "rest/customers.rest.ts"
     },
     {
-      "path": "rest/inventory.rest.generated.ts"
+      "path": "rest/inventory.rest.ts"
     },
     {
-      "path": "rest/orders.rest.generated.ts"
+      "path": "rest/orders.rest.ts"
     },
     {
-      "path": "rest/shipping.rest.generated.ts"
+      "path": "rest/shipping.rest.ts"
     }
   ]
 }

@@ -1,7 +1,7 @@
 // Must not compile: `debounce` keeps the `DebounceTimer` type it inherits
 // from Angular's `AsyncValidatorOptions`.
 import { schema } from '@angular/forms/signals';
-import type { PetRest } from '../../generated/rest/pet.rest.generated';
+import type { PetRest } from '../../generated/rest/pet.rest';
 import { validateRest } from '../../generated/rest.validate';
 
 declare const service: PetRest;

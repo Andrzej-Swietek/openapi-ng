@@ -85,6 +85,19 @@ pub struct GenerateOptions {
   /// (`json | blob | text | arrayBuffer`).
   pub response_type_mapping: Option<Vec<ResponseTypeMapping>>,
   pub naming: Option<NamingOptions>,
+  /// Angular output layouts. Defaults to `['services']`; only meaningful
+  /// with the `angular` emit target.
+  pub layout: Option<Vec<Layout>>,
+}
+
+/// One Angular output layout: the per-tag class (`services`) or one file
+/// per operation plus a barrel (`operations`). Listing both emits the
+/// classes on top of the operation files.
+#[napi(string_enum = "lowercase")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Layout {
+  Services,
+  Operations,
 }
 
 /// Explicit decoder selection. Skips both extension-based detection and
@@ -169,6 +182,11 @@ impl From<GenerateOptions> for GenerateConfig {
       response_type_mapping: value.response_type_mapping.unwrap_or_default(),
       naming_options: value.naming,
       naming: crate::plan::naming::NamingConfig::default(),
+      layout: value
+        .layout
+        .map_or_else(crate::options::default_layout, |layouts| {
+          layouts.into_iter().collect()
+        }),
     }
   }
 }
@@ -207,6 +225,7 @@ mod tests {
       mapped_types: None,
       response_type_mapping: None,
       naming: None,
+      layout: None,
     });
 
     assert!(config.emit.contains(&EmitTarget::Models));
@@ -225,6 +244,7 @@ mod tests {
       mapped_types: None,
       response_type_mapping: None,
       naming: None,
+      layout: None,
     });
 
     assert_eq!(config.emit.len(), 2);
@@ -249,14 +269,14 @@ mod tests {
         std::rc::Rc::from("spec.yaml"),
       )],
       artifacts: vec![GeneratedArtifact::new(
-        "model.generated.ts".to_string(),
+        "model.ts".to_string(),
         "export interface Pet {}\n".to_string(),
       )],
     });
 
     assert_eq!(result.summary.title, "Petstore Minimal");
     assert_eq!(result.artifacts.len(), 1);
-    assert_eq!(result.artifacts[0].path, "model.generated.ts");
+    assert_eq!(result.artifacts[0].path, "model.ts");
     assert_eq!(result.artifacts[0].contents, "export interface Pet {}\n");
     assert_eq!(result.diagnostics.len(), 1);
     assert_eq!(result.diagnostics[0].code, "E_UNSUPPORTED_SEMANTIC");

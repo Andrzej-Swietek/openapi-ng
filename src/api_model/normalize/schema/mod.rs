@@ -173,7 +173,9 @@ fn normalize_declared_type(
       )?)))
     }
     Some("object") => Ok(SchemaType::InlineObject {
-      properties: normalize_properties(schema, walk.item())?,
+      // `normalize_properties` descends per property; charging a level here
+      // too would halve the effective cap for nested inline objects.
+      properties: normalize_properties(schema, walk)?,
     }),
     Some(other) => bail_unsupported!(
       walk.reporter(),

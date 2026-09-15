@@ -340,7 +340,8 @@ mod tests {
     fn plans_multipart_body_with_fields_hoisted_to_form_collection() {
       let ir = api_model_with_multipart_op();
       let ctx = test_reporter();
-      let services = resolve_service_plans(&ir, &NamingResolver::default(), &ctx).expect("ok");
+      let services =
+        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
       let op = &services[0].operations[0];
       match &op.request.body {
         Some(PlannedRequestBody::Multipart { fields }) => {
@@ -356,7 +357,8 @@ mod tests {
     fn plans_form_fields_sorted_alphabetically() {
       let ir = api_model_with_multipart_unsorted_fields();
       let ctx = test_reporter();
-      let services = resolve_service_plans(&ir, &NamingResolver::default(), &ctx).expect("ok");
+      let services =
+        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
       let Some(PlannedRequestBody::Multipart { fields }) = &services[0].operations[0].request.body
       else {
         panic!("expected multipart body");
@@ -373,7 +375,7 @@ mod tests {
       // collide on the request interface.
       let ir = api_model_with_form_collision();
       let ctx = test_reporter();
-      let err = resolve_service_plans(&ir, &NamingResolver::default(), &ctx)
+      let err = resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false)
         .expect_err("hoisted form fields collide with path param");
       assert_eq!(err.subcode, Some("field-collision"));
       assert!(err.message.contains("fileName"));
@@ -385,7 +387,8 @@ mod tests {
       // into the source `SchemaType`, named schema or not.
       let ir = api_model_with_multipart_ref_body("UploadForm");
       let ctx = test_reporter();
-      let services = resolve_service_plans(&ir, &NamingResolver::default(), &ctx).expect("ok");
+      let services =
+        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
       assert!(matches!(
         services[0].operations[0].request.body,
         Some(PlannedRequestBody::Multipart { .. })

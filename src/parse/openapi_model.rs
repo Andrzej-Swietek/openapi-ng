@@ -185,6 +185,16 @@ impl Schema {
     }
   }
 
+  pub(crate) fn wrap_object(property: &str, value: Self) -> Self {
+    let properties: indexmap::IndexMap<String, Self> =
+      std::iter::once((property.to_string(), value)).collect();
+    Self {
+      type_: Some("object".to_string()),
+      properties: Some(properties.into()),
+      ..Default::default()
+    }
+  }
+
   pub(crate) fn wrap_one_of(members: Vec<Self>) -> Self {
     Self {
       one_of: Some(members),

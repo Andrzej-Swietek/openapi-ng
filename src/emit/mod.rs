@@ -1,15 +1,12 @@
 pub(crate) mod angular;
-mod emitter;
 pub(crate) mod model;
 pub(crate) mod ts;
-
-pub(crate) use emitter::emitters_for;
 
 #[cfg(test)]
 mod ts_tests;
 
 /// Public path of the generated TypeScript model artifact.
-pub(crate) const MODEL_ARTIFACT_PATH: &str = "model.generated.ts";
+pub(crate) const MODEL_ARTIFACT_PATH: &str = "model.ts";
 
 /// Crate version rendered into the do-not-edit banner.
 const GENERATOR_VERSION: &str = env!("CARGO_PKG_VERSION");
