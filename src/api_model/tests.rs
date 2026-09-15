@@ -1,10 +1,4 @@
-//! Two-stage tests that drive `normalize_document` →
-//! `render_type_reference`. They exercise the IR-shape invariants the
-//! emit layer relies on. (Discriminator narrowing and `$ref`
-//! validation run inside `normalize_api_model`, so a single
-//! `normalize_document` call now returns the finalized IR.) Pure
-//! normalize tests with no render step live next to the normalize
-//! stage in `ir::normalize::tests`.
+//! Tests driving `normalize_document` through `render_type_reference`.
 
 use serde_json::Value;
 
@@ -31,17 +25,17 @@ fn normalize_supports_empty_schema_any_type_and_empty_object_shapes() {
     "../../test/fixtures/empty-shapes.openapi.yaml"
   ));
   let sink = reporter_for("test/fixtures/empty-shapes.openapi.yaml");
-  let ir =
+  let model =
     normalize_document(&document, &sink).expect("normalize succeeds for empty schema fixture");
 
-  let any_value = find_symbol(&ir.schemas, "AnyValue");
+  let any_value = find_symbol(&model.schemas, "AnyValue");
   assert!(!matches!(&any_value.body, SchemaType::Ref(_)));
   assert_eq!(render_to_string(&any_value.body), "unknown");
 
   ["EmptyObject", "EmptyObjectWithProperties"]
     .iter()
     .for_each(|schema_name| {
-      let empty_object = find_symbol(&ir.schemas, schema_name);
+      let empty_object = find_symbol(&model.schemas, schema_name);
       match &empty_object.body {
         SchemaType::InlineObject { properties } => {
           assert!(
@@ -53,7 +47,7 @@ fn normalize_supports_empty_schema_any_type_and_empty_object_shapes() {
       }
     });
 
-  let shape_container = find_symbol(&ir.schemas, "ShapeContainer");
+  let shape_container = find_symbol(&model.schemas, "ShapeContainer");
   let properties = match &shape_container.body {
     SchemaType::InlineObject { properties } => properties,
     other => panic!("expected object schema, got {other:?}"),

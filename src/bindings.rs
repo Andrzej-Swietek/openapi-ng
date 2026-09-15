@@ -75,8 +75,7 @@ pub struct GenerateOptions {
   pub output_path: Option<String>,
   pub emit: Vec<EmitTarget>,
   pub mapped_types: Option<Vec<MappedType>>,
-  /// Per-content-type override of the response-decoding kind (`json | blob | text |
-  /// arrayBuffer`).
+  /// Per-content-type override of the response-decoding kind (`json | blob | text | arrayBuffer`).
   pub response_type_mapping: Option<Vec<ResponseTypeMapping>>,
   pub naming: Option<NamingOptions>,
   /// Angular output layouts.

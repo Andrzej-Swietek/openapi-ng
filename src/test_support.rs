@@ -172,8 +172,7 @@ fn build_form_fields<'a>(
     .collect()
 }
 
-/// An operation whose body is a multipart form of `(name, optional, schema)`
-/// fields.
+/// An operation whose body is a multipart form of `(name, optional, schema)` fields.
 pub(crate) fn op_with_multipart_fields<'a>(
   fields: Vec<(&str, bool, &'a BodyFieldType)>,
 ) -> PlannedOperation<'a> {

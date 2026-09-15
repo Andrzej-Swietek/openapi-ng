@@ -287,8 +287,7 @@ mod tests {
 
   #[test]
   fn write_import_line_keeps_single_entry_inline_even_when_over_budget() {
-    // A single identifier always stays on one line — wrapping a single
-    // name is just noise.
+    // A single identifier always stays on one line — wrapping a single name is just noise.
     let mut out = Writer::with_capacity(4096);
     import_line(
       &mut out,

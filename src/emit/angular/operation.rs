@@ -13,13 +13,11 @@ use super::request::{
 };
 use super::service::write_call_site;
 
-// Operation files live at `rest/<group>/<method>.ts`, one level
-// below the service files.
+// Operation files live at `rest/<group>/<method>.ts`, one level below the service files.
 const HELPER_IMPORT_PATH: &str = "../../rest.util";
 const MODEL_IMPORT_PATH: &str = "../../model";
 
-// Names no `export const` can bind: reserved words, and the two strict
-// mode refuses.
+// Names no `export const` can bind: reserved words, and the two strict mode refuses.
 const RESERVED_IDENTIFIERS: &[&str] = &[
   "arguments",
   "await",

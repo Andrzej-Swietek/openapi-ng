@@ -23,8 +23,7 @@ impl Writer {
   }
 
   pub(crate) fn push(&mut self, value: &str) {
-    // Fast path for the mid-line token case, which needs no indent
-    // bookkeeping and no newline scan.
+    // Fast path for the mid-line token case, which needs no indent bookkeeping and no newline scan.
     if !self.line_start && !value.contains('\n') {
       if !value.is_empty() {
         self.buf.push_str(value);

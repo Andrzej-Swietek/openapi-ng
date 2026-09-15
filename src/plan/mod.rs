@@ -26,14 +26,14 @@ pub(crate) struct GenerationPlan<'model> {
 /// Builds the plan for the targets `config` selects.
 pub(crate) fn plan_generation<'model>(
   config: &GenerateConfig,
-  ir: &'model ApiModel,
+  model: &'model ApiModel,
   reporter: &Reporter,
 ) -> Result<GenerationPlan<'model>, Diagnostic> {
   let emit_models = config.emit.contains(&EmitTarget::Models);
   let emit_angular = config.emit.contains(&EmitTarget::Angular);
 
   let mapped_types = if emit_models && !config.mapped_types.is_empty() {
-    validate_mapped_types_against_schemas(&ir.schemas, &config.mapped_types, reporter)?
+    validate_mapped_types_against_schemas(&model.schemas, &config.mapped_types, reporter)?
   } else {
     Vec::new()
   };
@@ -41,7 +41,7 @@ pub(crate) fn plan_generation<'model>(
   let services = if emit_angular {
     let resolver = crate::plan::naming::NamingResolver::new(config.naming.clone());
     resolve_service_plans(
-      ir,
+      model,
       &resolver,
       reporter,
       config.layout.contains(&crate::bindings::Layout::Operations),

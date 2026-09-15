@@ -74,8 +74,7 @@ pub(crate) enum RequestFieldKind {
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct PlannedRequestContract<'model> {
-  /// Path and query parameters; a hoisted body property lives on
-  /// [`PlannedRequestBody::FlatJson`].
+  /// Path and query parameters; a hoisted body property lives on [`PlannedRequestBody::FlatJson`].
   pub(crate) fields: Vec<PlannedRequestField<'model>>,
   /// Header parameters, empty when the operation declares none.
   pub(crate) headers: Vec<PlannedHeader<'model>>,
@@ -375,7 +374,7 @@ mod tests {
   fn resolve_service_plans_rejects_a_group_name_with_no_letters_or_digits() {
     // The kebab stem would be empty, leaving `rest/.rest.ts` and, under the
     // operations layout, `rest//index.ts`.
-    let ir = service_test_ir();
+    let model = service_test_ir();
     let ctx = test_reporter();
     let resolver = crate::plan::naming::NamingResolver::new(crate::plan::naming::NamingConfig {
       group: Some(crate::plan::naming::Naming::Single(
@@ -384,7 +383,7 @@ mod tests {
       ..Default::default()
     });
 
-    let error = resolve_service_plans(&ir, &resolver, &ctx, false)
+    let error = resolve_service_plans(&model, &resolver, &ctx, false)
       .expect_err("an all-punctuation group names no file");
     assert_eq!(error.subcode, Some("naming-resolution"));
     assert!(error.message.contains("no letters or digits"));
@@ -392,10 +391,10 @@ mod tests {
 
   #[test]
   fn resolve_service_plans_groups_operations_and_builds_request_contracts() {
-    let ir = service_test_ir();
+    let model = service_test_ir();
     let ctx = test_reporter();
     let services = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::default(),
       &ctx,
       false,
@@ -456,8 +455,7 @@ mod tests {
 
   #[test]
   fn resolve_service_plans_keeps_ref_bodies_nested_under_smart_flatten() {
-    // A body authored as a `$ref` stays nested even when the ref
-    // resolves to an `InlineObject`.
+    // A body authored as a `$ref` stays nested even when the ref resolves to an `InlineObject`.
     let model_symbols = vec![
       ModelSymbol {
         name: "PetId".into(),
@@ -480,7 +478,7 @@ mod tests {
         },
       },
     ];
-    let ir = api_model(
+    let model = api_model(
       model_symbols,
       vec![OperationDef {
         operation_id: "createPet".to_string(),
@@ -509,7 +507,7 @@ mod tests {
 
     let ctx = test_reporter();
     let services = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::default(),
       &ctx,
       false,
@@ -570,11 +568,11 @@ mod tests {
         deprecated: false,
       },
     ];
-    let ir = api_model(Vec::new(), operations);
+    let model = api_model(Vec::new(), operations);
 
     let ctx = test_reporter();
     let services = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::default(),
       &ctx,
       false,
@@ -666,13 +664,13 @@ mod tests {
 
   #[test]
   fn index_method_name_is_rejected_under_the_operations_layout() {
-    let ir = api_model(
+    let model = api_model(
       Vec::new(),
       vec![operation_def("index", HttpMethod::Get, "/pets")],
     );
     let ctx = test_reporter();
     let err = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::default(),
       &ctx,
       true,
@@ -692,13 +690,13 @@ mod tests {
 
   #[test]
   fn index_method_name_is_a_plain_property_under_the_services_layout() {
-    let ir = api_model(
+    let model = api_model(
       Vec::new(),
       vec![operation_def("index", HttpMethod::Get, "/pets")],
     );
     let ctx = test_reporter();
     let services = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::default(),
       &ctx,
       false,
@@ -710,13 +708,13 @@ mod tests {
 
   #[test]
   fn method_name_without_letters_or_digits_is_rejected_under_the_operations_layout() {
-    let ir = api_model(
+    let model = api_model(
       Vec::new(),
       vec![operation_def("$", HttpMethod::Get, "/pets")],
     );
     let ctx = test_reporter();
     let err = resolve_service_plans(
-      &ir,
+      &model,
       &crate::plan::naming::NamingResolver::new(crate::plan::naming::NamingConfig {
         method_name: Some(crate::plan::naming::Naming::Single(
           crate::plan::naming::RuleEntry::Rule(crate::plan::naming::Rule {
@@ -742,7 +740,7 @@ mod tests {
     list.tags = vec!["Pet".to_string()];
     let mut get = operation_def("getPet", HttpMethod::Get, "/pets/{id}");
     get.tags = vec!["pet".to_string()];
-    let ir = api_model(Vec::new(), vec![list, get]);
+    let model = api_model(Vec::new(), vec![list, get]);
     // A group rule without a case transform keeps `Pet` and `pet` distinct.
     let resolver = crate::plan::naming::NamingResolver::new(crate::plan::naming::NamingConfig {
       method_name: None,
@@ -757,7 +755,7 @@ mod tests {
     });
     for standalone in [false, true] {
       let ctx = test_reporter();
-      let err = resolve_service_plans(&ir, &resolver, &ctx, standalone)
+      let err = resolve_service_plans(&model, &resolver, &ctx, standalone)
         .expect_err("both groups plan rest/pet.rest.ts");
       assert_eq!(err.subcode, Some("naming-resolution"));
       assert!(
@@ -772,8 +770,7 @@ mod tests {
 
   #[test]
   fn operations_whose_files_share_a_stem_are_rejected() {
-    // `delete` and `delete_` are distinct method names that both
-    // kebab-case to `delete.ts`.
+    // `delete` and `delete_` are distinct method names that both kebab-case to `delete.ts`.
     let mut operations = vec![
       op_with(
         "delete",

@@ -106,8 +106,7 @@ pub(super) fn normalize_properties(
     .collect()
 }
 
-/// Normalizes `schema` at `walk`, folding its own `nullable: true` into the
-/// result.
+/// Normalizes `schema` at `walk`, folding its own `nullable: true` into the result.
 pub(super) fn normalize_schema(
   schema: &Schema,
   walk: SchemaWalk<'_>,
@@ -213,8 +212,7 @@ fn apply_nullable_flag(base: SchemaType, nullable: bool) -> SchemaType {
   SchemaType::Nullable(Box::new(base))
 }
 
-/// True for a schema with no constraints at all, which renders as
-/// `unknown`.
+/// True for a schema with no constraints at all, which renders as `unknown`.
 const fn is_any_type_schema(schema: &Schema) -> bool {
   schema.type_.is_none()
     && schema.ref_.is_none()

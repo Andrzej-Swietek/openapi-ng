@@ -100,22 +100,23 @@ fn run_pipeline(
   reporter: &Reporter,
 ) -> Result<(GenerateSummary, Vec<GeneratedArtifact>), Diagnostic> {
   let config = resolve_generate_config(config, reporter)?;
-  let ir = build_ir(&config, &display_path, reporter)?;
-  let summary = GenerateSummary::from_ir(display_path.as_ref().to_string(), &ir);
+  let model = build_ir(&config, &display_path, reporter)?;
+  let summary = GenerateSummary::from_ir(display_path.as_ref().to_string(), &model);
 
-  let plan = plan_generation(&config, &ir, reporter)?;
+  let plan = plan_generation(&config, &model, reporter)?;
 
   // One banner per run, prefixed onto every artifact.
   let banner = render_generated_banner(summary.normalized_source_path.as_str());
 
   // Emit order: models → angular support → services, which
   // `resolve_service_plans` already sorted by class name.
-  let models = (config.emit.contains(&EmitTarget::Models) && !ir.schemas.is_empty()).then(|| {
-    (
-      MODEL_ARTIFACT_PATH,
-      emit_model(&ir.schemas, &plan.mapped_types),
-    )
-  });
+  let models =
+    (config.emit.contains(&EmitTarget::Models) && !model.schemas.is_empty()).then(|| {
+      (
+        MODEL_ARTIFACT_PATH,
+        emit_model(&model.schemas, &plan.mapped_types),
+      )
+    });
 
   let angular = config.emit.contains(&EmitTarget::Angular);
   let standalone = angular && config.layout.contains(&Layout::Operations);
@@ -153,8 +154,7 @@ fn run_pipeline(
         .expect("operations barrel is planned for this layout");
       (path, emit_operations_barrel(service))
     });
-    // With operation files present the class binds them instead of
-    // inlining its own builders.
+    // With operation files present the class binds them instead of inlining its own builders.
     let class = classes.then(|| {
       let body = if standalone {
         emit_bound_service(service)
@@ -223,13 +223,13 @@ mod tests {
     let ctx = test_reporter();
     let display: Rc<str> = Rc::from("test/fixtures/petstore-minimal.openapi.yaml");
     let config = build_ir_config_for_path("test/fixtures/petstore-minimal.openapi.yaml");
-    let ir = build_ir(&config, &display, &ctx).expect("compiler stages succeed");
+    let model = build_ir(&config, &display, &ctx).expect("compiler stages succeed");
 
-    assert_eq!(ir.info.title, "Petstore Minimal");
-    assert_eq!(ir.info.spec_version, "3.0.3");
-    assert_eq!(ir.schemas.len(), 1);
-    assert_eq!(ir.operations.len(), 1);
-    assert_eq!(ir.operations[0].operation_id, "listPets");
+    assert_eq!(model.info.title, "Petstore Minimal");
+    assert_eq!(model.info.spec_version, "3.0.3");
+    assert_eq!(model.schemas.len(), 1);
+    assert_eq!(model.operations.len(), 1);
+    assert_eq!(model.operations[0].operation_id, "listPets");
   }
 
   #[test]
@@ -412,8 +412,7 @@ mod tests {
     })
     .expect("generation succeeds");
 
-    // Error interfaces live in the per-tag service file, so there is no
-    // `errors.ts`.
+    // Error interfaces live in the per-tag service file, so there is no `errors.ts`.
     assert!(
       !result
         .artifacts

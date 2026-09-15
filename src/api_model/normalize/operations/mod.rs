@@ -27,8 +27,7 @@ pub(super) const JSON: &str = "application/json";
 pub(super) const MULTIPART: &str = "multipart/form-data";
 pub(super) const URL_ENCODED: &str = "application/x-www-form-urlencoded";
 
-/// Where an operation sits, what its `$ref`s resolve against, and where its
-/// diagnostics go.
+/// Where an operation sits, what its `$ref`s resolve against, and where its diagnostics go.
 #[derive(Clone, Copy)]
 pub(super) struct LoweringContext<'a> {
   method: &'a str,

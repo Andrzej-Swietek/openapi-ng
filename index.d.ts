@@ -38,10 +38,7 @@ export interface GenerateOptions {
   outputPath?: string
   emit?: Array<EmitTarget>
   mappedTypes?: Array<MappedType>
-  /**
-   * Per-content-type override of the response-decoding kind (`json | blob | text |
-   * arrayBuffer`).
-   */
+  /** Per-content-type override of the response-decoding kind (`json | blob | text | arrayBuffer`). */
   responseTypeMapping?: Array<ResponseTypeMapping>
   naming?: NamingConfig
   /** Angular output layouts. */

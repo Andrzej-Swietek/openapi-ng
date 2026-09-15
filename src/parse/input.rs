@@ -370,8 +370,7 @@ components:
 
   #[test]
   fn anchor_expansion_exceeding_ratio_rejects() {
-    // 500 rows × 16 aliases × ~250-byte body: ~30 KB source, ~2 MB
-    // re-serialised, past the 50× cap.
+    // 500 rows × 16 aliases × ~250-byte body: ~30 KB source, ~2 MB re-serialised, past the 50× cap.
     let mut yaml = String::from(
       "openapi: 3.0.3\ninfo:\n  title: Fanout\n  version: 1.0.0\npaths: {}\ncomponents:\n  schemas:\n    Base: &b\n      type: object\n      properties:\n",
     );

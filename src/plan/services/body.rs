@@ -63,8 +63,7 @@ fn plan_form_fields<'model>(fields: &'model [BodyField]) -> Vec<PlannedFormField
   out
 }
 
-/// Fails when a hoisted body field name clashes with a path or query parameter already on
-/// `fields`.
+/// Fails when a hoisted body field name clashes with a path or query parameter already on `fields`.
 pub(super) fn check_body_field_collisions(
   fields: &[PlannedRequestField],
   body: Option<&PlannedRequestBody>,
@@ -335,10 +334,10 @@ mod tests {
 
     #[test]
     fn plans_multipart_body_with_fields_hoisted_to_form_collection() {
-      let ir = api_model_with_multipart_op();
+      let model = api_model_with_multipart_op();
       let ctx = test_reporter();
       let services =
-        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
+        resolve_service_plans(&model, &NamingResolver::default(), &ctx, false).expect("ok");
       let op = &services[0].operations[0];
       match &op.request.body {
         Some(PlannedRequestBody::Multipart { fields }) => {
@@ -352,10 +351,10 @@ mod tests {
 
     #[test]
     fn plans_form_fields_sorted_alphabetically() {
-      let ir = api_model_with_multipart_unsorted_fields();
+      let model = api_model_with_multipart_unsorted_fields();
       let ctx = test_reporter();
       let services =
-        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
+        resolve_service_plans(&model, &NamingResolver::default(), &ctx, false).expect("ok");
       let Some(PlannedRequestBody::Multipart { fields }) = &services[0].operations[0].request.body
       else {
         panic!("expected multipart body");
@@ -370,9 +369,9 @@ mod tests {
     fn form_field_name_collision_with_path_param_emits_field_collision() {
       // `{fileName}` in the path and a `fileName` form field would
       // collide on the request interface.
-      let ir = api_model_with_form_collision();
+      let model = api_model_with_form_collision();
       let ctx = test_reporter();
-      let err = resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false)
+      let err = resolve_service_plans(&model, &NamingResolver::default(), &ctx, false)
         .expect_err("hoisted form fields collide with path param");
       assert_eq!(err.subcode, Some("field-collision"));
       assert!(err.message.contains("fileName"));
@@ -382,10 +381,10 @@ mod tests {
     fn multipart_ref_body_still_flattens_fields_under_smart_rule() {
       // Multipart always flattens: `BodyFieldType` does not compose
       // into the source `SchemaType`, named schema or not.
-      let ir = api_model_with_multipart_ref_body("UploadForm");
+      let model = api_model_with_multipart_ref_body("UploadForm");
       let ctx = test_reporter();
       let services =
-        resolve_service_plans(&ir, &NamingResolver::default(), &ctx, false).expect("ok");
+        resolve_service_plans(&model, &NamingResolver::default(), &ctx, false).expect("ok");
       assert!(matches!(
         services[0].operations[0].request.body,
         Some(PlannedRequestBody::Multipart { .. })

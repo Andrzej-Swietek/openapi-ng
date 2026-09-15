@@ -19,9 +19,9 @@ impl GenerateSummary {
   /// Builds a summary whose counts come from the IR, and so describe what the generator emits
   /// rather than what the document declared.
   #[must_use]
-  pub(crate) fn from_ir(normalized_source_path: String, ir: &ApiModel) -> Self {
+  pub(crate) fn from_ir(normalized_source_path: String, model: &ApiModel) -> Self {
     // One path carries an operation per method, so the list repeats.
-    let mut paths: Vec<&str> = ir
+    let mut paths: Vec<&str> = model
       .operations
       .iter()
       .map(|operation| operation.path.as_str())
@@ -32,11 +32,11 @@ impl GenerateSummary {
     // `u32::MAX`; the clamp is defence in depth.
     Self {
       normalized_source_path,
-      spec_version: ir.info.spec_version.clone(),
-      title: ir.info.title.clone(),
+      spec_version: model.info.spec_version.clone(),
+      title: model.info.title.clone(),
       path_count: clamp_count(paths.len()),
-      operation_count: clamp_count(ir.operations.len()),
-      schema_count: clamp_count(ir.schemas.len()),
+      operation_count: clamp_count(model.operations.len()),
+      schema_count: clamp_count(model.schemas.len()),
     }
   }
 }

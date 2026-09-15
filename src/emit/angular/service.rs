@@ -30,8 +30,7 @@ pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
 
   buffer.close_block("");
 
-  // Grouped per operation, so a reader finds a property, its params and
-  // its error map contiguously.
+  // Grouped per operation, so a reader finds a property, its params and its error map contiguously.
   for operation in &service_plan.operations {
     let request_name = operation.request_interface.as_ref();
     let has_errors = !operation.errors.is_empty();
@@ -72,8 +71,7 @@ pub(crate) fn emit_bound_service(service_plan: &ServicePlan<'_>) -> String {
   buffer.line("})");
   buffer.open_block(&format!("export class {}", service_plan.class_name));
 
-  // One-liners stay contiguous; a blank line separates documented
-  // properties from their neighbours.
+  // One-liners stay contiguous; a blank line separates documented properties from their neighbours.
   let mut previous_documented = false;
   for (index, operation) in service_plan.operations.iter().enumerate() {
     let documented = !Doc::new(operation.description.as_deref(), operation.deprecated).is_empty();

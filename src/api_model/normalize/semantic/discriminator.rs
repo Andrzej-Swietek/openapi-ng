@@ -148,8 +148,7 @@ fn find_property<'a>(
   }
 }
 
-/// True for the property types a discriminator may declare: bare `string` or a string-literal
-/// enum.
+/// True for the property types a discriminator may declare: bare `string` or a string-literal enum.
 #[must_use]
 const fn is_string_discriminator_shape(schema: &SchemaType) -> bool {
   matches!(

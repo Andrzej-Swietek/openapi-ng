@@ -17,8 +17,7 @@ use crate::parse::openapi_model::{AdditionalProperties, MediaType, Schema};
 use super::super::schema::normalize_schema;
 use super::super::{SchemaWalk, unsupported};
 
-/// The form flavour, the operation position and the diagnostic sink every rejection message
-/// needs.
+/// The form flavour, the operation position and the diagnostic sink every rejection message needs.
 #[derive(Clone, Copy)]
 pub(super) struct FormBody<'a> {
   kind: FormKind,

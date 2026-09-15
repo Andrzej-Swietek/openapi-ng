@@ -1,5 +1,4 @@
-//! The per-operation request surface: its interface, its builder and the lines the builder
-//! writes.
+//! The per-operation request surface: its interface, its builder and the lines the builder writes.
 
 mod interface;
 mod lines;

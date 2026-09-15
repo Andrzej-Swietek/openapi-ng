@@ -15,8 +15,7 @@ pub(crate) fn service_file_stem(group: &str) -> String {
   apply_case(group, Case::Kebab)
 }
 
-/// Kebab-case file stem for a standalone operation file: `listPets` →
-/// `list-pets`.
+/// Kebab-case file stem for a standalone operation file: `listPets` → `list-pets`.
 #[must_use]
 pub(crate) fn operation_file_stem(method_name: &str) -> String {
   apply_case(method_name, Case::Kebab)
@@ -108,8 +107,7 @@ mod tests {
     chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
   }
 
-  /// Kebab-case ASCII: no leading, trailing or repeated hyphen. The empty
-  /// string passes.
+  /// Kebab-case ASCII: no leading, trailing or repeated hyphen. The empty string passes.
   fn is_kebab_case_ascii(value: &str) -> bool {
     value.is_empty()
       || (!value.starts_with('-')

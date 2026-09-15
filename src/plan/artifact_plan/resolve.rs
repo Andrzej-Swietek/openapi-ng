@@ -49,14 +49,14 @@ pub(crate) fn validate_mapped_types_against_schemas<'model>(
 }
 
 pub(crate) fn resolve_service_plans<'model>(
-  ir: &'model ApiModel,
+  model: &'model ApiModel,
   resolver: &crate::plan::naming::NamingResolver,
   reporter: &Reporter,
   standalone: bool,
 ) -> Result<Vec<ServicePlan<'model>>, Diagnostic> {
   use crate::plan::services::group_operations;
 
-  let mut services = group_operations(&ir.operations, resolver, reporter)?
+  let mut services = group_operations(&model.operations, resolver, reporter)?
     .into_iter()
     .map(|(group_name, group)| {
       let file_stem = group_file_stem(&group_name, reporter)?;

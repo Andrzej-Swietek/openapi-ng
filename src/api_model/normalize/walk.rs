@@ -1,5 +1,4 @@
-//! Position of a schema walk: breadcrumb, nesting depth and diagnostic sink, carried as one
-//! value.
+//! Position of a schema walk: breadcrumb, nesting depth and diagnostic sink, carried as one value.
 
 use crate::error::{Context, Diagnostic, Reporter};
 

@@ -1,5 +1,4 @@
-//! `oneOf` / `anyOf` / `allOf` lowering, and the discriminator carried by a discriminated
-//! `oneOf`.
+//! `oneOf` / `anyOf` / `allOf` lowering, and the discriminator carried by a discriminated `oneOf`.
 
 use std::collections::BTreeMap;
 
