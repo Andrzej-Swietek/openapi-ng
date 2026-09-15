@@ -45,6 +45,43 @@ proptest! {
 }
 
 #[test]
+fn every_nesting_shape_reaches_the_same_depth_cap() {
+  // One unit per level, whichever constructor descends. A shape that charges
+  // twice caps out at half the others.
+  /// One nesting level of a given shape.
+  type Wrap = fn(Schema) -> Schema;
+
+  let shapes: [(&str, Wrap); 4] = [
+    ("array", Schema::wrap_array),
+    ("inline object", |inner| Schema::wrap_object("child", inner)),
+    ("oneOf", |inner| Schema::wrap_one_of(vec![inner])),
+    ("additionalProperties", Schema::wrap_map),
+  ];
+
+  let deepest_accepted = |wrap: Wrap| {
+    (1..=64)
+      .take_while(|levels| {
+        let schema = (0..*levels).fold(Schema::default_string(), |inner, _| wrap(inner));
+        let reporter = Reporter::new(Rc::from("test"));
+        normalize_named_schema("Root", &schema, &reporter).is_ok()
+      })
+      .last()
+      .unwrap_or(0)
+  };
+
+  let (first_name, first_wrap) = shapes[0];
+  let expected = deepest_accepted(first_wrap);
+  assert!(expected > 0, "{first_name} accepted no nesting at all");
+  for (name, wrap) in shapes {
+    assert_eq!(
+      deepest_accepted(wrap),
+      expected,
+      "{name} caps at a different depth than {first_name}"
+    );
+  }
+}
+
+#[test]
 fn nested_inline_objects_are_charged_one_level_each() {
   // Arrays already covered the depth guard; inline objects descend through
   // `normalize_properties`, which is where a double charge would hide.

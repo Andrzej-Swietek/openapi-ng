@@ -181,7 +181,7 @@ pub(crate) fn resolve_service_plans<'model>(
   let mut services = group_operations(&ir.operations, resolver, reporter)?
     .into_iter()
     .map(|(group_name, group)| {
-      let file_stem = service_file_stem(&group_name);
+      let file_stem = group_file_stem(&group_name, reporter)?;
       let mut operations = group
         .into_iter()
         .map(|(operation, method_name)| {
@@ -234,6 +234,22 @@ fn plan_operation<'model>(
     description: operation.description.clone(),
     deprecated: operation.deprecated,
   })
+}
+
+/// Kebab-case stem for a group's files, rejecting a name that leaves none:
+/// the paths built from it would carry an empty segment.
+fn group_file_stem(group_name: &str, reporter: &Reporter) -> Result<String, Diagnostic> {
+  let stem = service_file_stem(group_name);
+  if stem.is_empty() {
+    return Err(Diagnostic::policy_violation(
+      reporter,
+      "naming-resolution",
+      format!(
+        "group '{group_name}' has no letters or digits, so it cannot name a service file. Adjust naming.group."
+      ),
+    ));
+  }
+  Ok(stem)
 }
 
 /// `rest/<group>/<method>.ts`, rejecting a method name the barrel cannot
@@ -592,6 +608,25 @@ mod tests {
 
     assert_eq!(err.code, crate::error::DiagnosticCode::InvalidOption);
     assert!(err.message.contains("Missing"));
+  }
+
+  #[test]
+  fn resolve_service_plans_rejects_a_group_name_with_no_letters_or_digits() {
+    // The kebab stem would be empty, leaving `rest/.rest.ts` and, under the
+    // operations layout, `rest//index.ts`.
+    let ir = service_test_ir();
+    let ctx = test_reporter();
+    let resolver = crate::plan::naming::NamingResolver::new(crate::plan::naming::NamingConfig {
+      group: Some(crate::plan::naming::Naming::Single(
+        crate::plan::naming::RuleEntry::Shorthand("---".to_string()),
+      )),
+      ..Default::default()
+    });
+
+    let error = resolve_service_plans(&ir, &resolver, &ctx, false)
+      .expect_err("an all-punctuation group names no file");
+    assert_eq!(error.subcode, Some("naming-resolution"));
+    assert!(error.message.contains("no letters or digits"));
   }
 
   #[test]

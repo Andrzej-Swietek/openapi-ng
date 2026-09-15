@@ -202,6 +202,14 @@ impl Schema {
     }
   }
 
+  pub(crate) fn wrap_map(values: Self) -> Self {
+    Self {
+      type_: Some("object".to_string()),
+      additional_properties: Some(AdditionalProperties::Schema(Box::new(values))),
+      ..Default::default()
+    }
+  }
+
   pub(crate) fn wrap_nullable(inner: Self) -> Self {
     Self {
       nullable: Some(true),

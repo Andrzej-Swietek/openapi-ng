@@ -111,6 +111,27 @@ test('GenerateError.subcode is null (never undefined) when absent', t => {
   t.is(err.subcode, null);
 });
 
+test('every runtime constant index.d.ts declares is exported by both entries', t => {
+  const browserEntry = require(path.join(repoRoot, 'browser.js')) as Record<string, unknown>;
+  const declared = fs
+    .readFileSync(path.join(repoRoot, 'index.d.ts'), 'utf8')
+    .split('\n')
+    .flatMap(line => {
+      const match = /^export declare const ([A-Za-z]+): \{/.exec(line);
+      return match?.[1] ? [match[1]] : [];
+    });
+
+  t.true(declared.length > 0, 'index.d.ts declares no runtime constants');
+  for (const name of declared) {
+    t.not((lib as Record<string, unknown>)[name], undefined, `lib/index.js omits ${name}`);
+    t.not(
+      browserEntry[name],
+      undefined,
+      `lib/browser.js omits ${name}`,
+    );
+  }
+});
+
 test('public surface is a fixed allow-list', t => {
   const allowed = new Set([
     'generate',
