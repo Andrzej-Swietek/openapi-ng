@@ -17,6 +17,7 @@ pub(crate) fn escape_into(out: &mut String, value: &str) {
 }
 
 /// The escape `ch` needs, or `None` when it stands for itself.
+#[must_use]
 const fn escape_sequence(ch: char) -> Option<&'static str> {
   match ch {
     '\\' => Some("\\\\"),
@@ -29,6 +30,7 @@ const fn escape_sequence(ch: char) -> Option<&'static str> {
 }
 
 /// `value` as a single-quoted TypeScript string literal.
+#[must_use]
 pub(crate) fn quoted(value: &str) -> String {
   let mut out = String::with_capacity(value.len() + 2);
   escape_into(&mut out, value);
@@ -37,6 +39,7 @@ pub(crate) fn quoted(value: &str) -> String {
 
 /// Quotes `name` when it falls outside `[A-Za-z_$][A-Za-z0-9_$]*`, which
 /// leaves a reserved word like `class` unquoted in property position.
+#[must_use]
 pub(crate) fn safe_property_name(name: &str) -> Cow<'_, str> {
   if is_identifier(name) {
     Cow::Borrowed(name)

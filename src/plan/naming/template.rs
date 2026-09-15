@@ -68,6 +68,7 @@ fn resolve(
 
 /// Splits `tags[-1]` into `("tags", "-1")`, or `None` when the token is not
 /// an indexed reference.
+#[must_use]
 fn split_index(token: &str) -> Option<(&str, &str)> {
   let open = token.find('[')?;
   let index = token[open + 1..].strip_suffix(']')?;

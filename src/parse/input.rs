@@ -1,3 +1,4 @@
+use crate::subcode;
 use std::{fs, path::Path, rc::Rc};
 
 use crate::{
@@ -144,11 +145,12 @@ fn decode_yaml(source: &str, display_path: &Rc<str>) -> Result<OpenApiDocument, 
 /// Projects a `serde_yml` decode error onto a diagnostic. A duplicate key
 /// under `components.schemas` carries the `duplicate-schema-name` subcode so
 /// consumers can route on it; anything else is a plain decode failure.
+#[must_use]
 fn decode_failure(message: &str, display_path: &Rc<str>) -> Diagnostic {
   if message.contains(DUPLICATE_KEY) && message.contains(SCHEMAS_FIELD_PATH) {
     return Diagnostic {
       code: DiagnosticCode::PolicyViolation,
-      subcode: Some("duplicate-schema-name"),
+      subcode: Some(subcode::DUPLICATE_SCHEMA_NAME),
       message: format!(
         "Failed to decode OpenAPI input: {message}. Each schema name must be declared once."
       ),
@@ -193,7 +195,7 @@ fn check_anchor_expansion(source: &str, display_path: &Rc<str>) -> Result<(), Di
 
   Err(Diagnostic {
     code: DiagnosticCode::PolicyViolation,
-    subcode: Some("mapping-expansion-exceeded"),
+    subcode: Some(subcode::MAPPING_EXPANSION_EXCEEDED),
     message: format!(
       "Failed to decode OpenAPI input: YAML anchor expansion produced {expanded_len} bytes from {source_len} bytes of source — {ratio}× ratio exceeds the cap of {cap}×. The spec likely uses anchors with deep fan-out; inline the aliases or set OPENAPI_NG_MAX_EXPANSION_RATIO to override.",
       expanded_len = expanded.len(),

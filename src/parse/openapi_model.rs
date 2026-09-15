@@ -75,6 +75,7 @@ pub(crate) struct Operation {
 impl Operation {
   /// Returns summary and description joined with a blank line, or whichever
   /// is present alone. Whitespace-only values are treated as absent.
+  #[must_use]
   pub(crate) fn merged_description(&self) -> Option<String> {
     match (
       self

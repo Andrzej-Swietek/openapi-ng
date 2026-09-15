@@ -4,17 +4,20 @@ use std::path::{Path, PathBuf};
 /// Native builds ask the OS. WASI has no host cwd, but the Node loader
 /// passes `process.env` through, so `PWD` carries it there.
 #[cfg(not(target_os = "wasi"))]
+#[must_use]
 pub(crate) fn host_cwd() -> Option<PathBuf> {
   std::env::current_dir().ok()
 }
 
 #[cfg(target_os = "wasi")]
+#[must_use]
 pub(crate) fn host_cwd() -> Option<PathBuf> {
   std::env::var_os("PWD").map(PathBuf::from)
 }
 
 /// Join a relative path onto the host cwd; absolute paths pass through.
 /// Without a known cwd the path is returned unchanged.
+#[must_use]
 pub(crate) fn resolve_against_host_cwd(path: &Path) -> PathBuf {
   if path.is_absolute() {
     return path.to_path_buf();

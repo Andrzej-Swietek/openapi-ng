@@ -1,5 +1,6 @@
 //! Grouping operations into services.
 
+use crate::subcode;
 use indexmap::IndexMap;
 
 use crate::{
@@ -51,7 +52,7 @@ fn reject_duplicate_method_name(
   };
   Err(Diagnostic::policy_violation(
     reporter,
-    "naming-resolution",
+    subcode::NAMING_RESOLUTION,
     format!(
       "methodName '{method_name}' resolves for both {} {} (operationId={}) and {} {} (operationId={}) in group '{group_name}'; adjust naming.methodName so they differ.",
       previous.method,

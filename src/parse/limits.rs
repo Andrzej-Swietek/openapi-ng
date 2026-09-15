@@ -13,6 +13,7 @@ pub(crate) struct EnvCap<T> {
 }
 
 impl<T: FromStr + Copy> EnvCap<T> {
+  #[must_use]
   pub(crate) const fn new(variable: &'static str, default: T) -> Self {
     Self {
       variable,
@@ -21,6 +22,7 @@ impl<T: FromStr + Copy> EnvCap<T> {
     }
   }
 
+  #[must_use]
   pub(crate) fn get(&self) -> T {
     *self
       .cached
@@ -29,6 +31,7 @@ impl<T: FromStr + Copy> EnvCap<T> {
 
   /// Resolves the cap from `raw` rather than from the environment, and
   /// caches nothing.
+  #[must_use]
   pub(crate) fn parse(&self, raw: Option<&str>) -> T {
     raw
       .and_then(|value| value.parse().ok())

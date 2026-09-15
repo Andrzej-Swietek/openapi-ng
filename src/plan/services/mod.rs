@@ -6,6 +6,7 @@
 mod body;
 mod grouping;
 
+use crate::subcode;
 use std::collections::BTreeSet;
 
 use crate::{
@@ -39,7 +40,7 @@ fn check_path_query_collisions(
     let names = colliding.join(", ");
     bail_policy!(
       reporter,
-      "field-collision",
+      subcode::FIELD_COLLISION,
       "operationId '{operation_id}': path and query parameters share names [{names}], \
          which would produce duplicate fields in the generated request contract. \
          Rename the colliding parameters in the OpenAPI spec."

@@ -24,7 +24,7 @@ pub(crate) enum SchemaType {
   },
   Ref(Box<str>),
   /// `oneOf`/`anyOf`. `discriminator` is set only for a discriminated
-  /// `oneOf`; `narrow_discriminator_properties` consumes it.
+  /// `oneOf`; `semantic::discriminator::narrow` consumes it.
   Union {
     members: Vec<SchemaType>,
     discriminator: Option<Discriminator>,

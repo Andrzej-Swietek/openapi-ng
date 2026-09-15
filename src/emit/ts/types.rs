@@ -64,6 +64,7 @@ impl<T: Render + ?Sized> Render for &T {
 }
 
 impl SchemaType {
+  #[must_use]
   const fn is_composite(&self) -> bool {
     matches!(
       self,
@@ -132,6 +133,7 @@ pub(crate) fn member_declaration(
   out.push(";\n");
 }
 
+#[must_use]
 const fn scalar_keyword(scalar: &SchemaScalar) -> &'static str {
   match scalar {
     SchemaScalar::String => "string",

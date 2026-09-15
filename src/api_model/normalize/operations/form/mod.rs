@@ -1,17 +1,21 @@
 //! `multipart/form-data` and `application/x-www-form-urlencoded` body
 //! lowering: a flat, statically enumerated field list.
 
+mod fields;
+
+use fields::{RawPropertyFormat, classify_body_field_type, collect_raw_property_formats};
+
+use crate::subcode;
 use std::collections::BTreeMap;
 
-use crate::api_model::canonical::{BodyField, BodyFieldType};
-use crate::api_model::schema::{SchemaProperty, SchemaScalar, SchemaType};
+use crate::api_model::canonical::BodyField;
+use crate::api_model::schema::{SchemaProperty, SchemaType};
 use crate::error::{Context, Diagnostic, Reporter, bail_policy};
 use crate::identifier::Identifier;
 use crate::parse::openapi_model::{AdditionalProperties, MediaType, Schema};
 
 use super::super::schema::normalize_schema;
 use super::super::{SchemaWalk, unsupported};
-use super::URL_ENCODED;
 
 /// The form flavour, the operation position and the diagnostic sink every
 /// rejection message needs.
@@ -24,6 +28,7 @@ pub(super) struct FormBody<'a> {
 }
 
 impl<'a> FormBody<'a> {
+  #[must_use]
   pub(super) const fn new(
     kind: FormKind,
     method: &'a str,
@@ -63,6 +68,7 @@ pub(super) enum Reject {
 
 impl FormKind {
   /// Label used in diagnostic prose.
+  #[must_use]
   const fn label(self) -> &'static str {
     match self {
       Self::Multipart => "multipart",
@@ -71,6 +77,7 @@ impl FormKind {
   }
 
   /// Stable kebab-case subcode for `reject` under this flavour.
+  #[must_use]
   const fn subcode(self, reject: Reject) -> &'static str {
     match (self, reject) {
       (Self::Multipart, Reject::NonObjectBody) => "multipart-non-object-body",
@@ -89,11 +96,10 @@ impl FormKind {
 const BINARY: &str = "binary";
 
 /// Subcode for a binary field in a urlencoded body, scalar or array.
-const URLENCODED_BINARY_FIELD: &str = "urlencoded-binary-field";
+const URLENCODED_BINARY_FIELD: &str = subcode::URLENCODED_BINARY_FIELD;
 
-/// Flattens a form body's schema into an alphabetically sorted field
-/// list. The returned name is `Some` when the body was declared as a
-/// top-level `$ref`. `format: binary` is detected for an inline body only.
+/// A form body's fields, sorted by name. The returned name is `Some` for a
+/// top-level `$ref`; `format: binary` is read from an inline body only.
 pub(super) fn normalize_form_body_fields(
   media: &MediaType,
   body: FormBody<'_>,
@@ -149,7 +155,7 @@ fn declared_schema<'a>(media: &'a MediaType, body: FormBody<'_>) -> Result<&'a S
   media.schema.as_ref().ok_or_else(|| {
     Diagnostic::policy_violation(
       body.reporter,
-      "missing-body-schema",
+      subcode::MISSING_BODY_SCHEMA,
       format!(
         "requestBody for {} {} must define schema.",
         body.method, body.path
@@ -208,7 +214,7 @@ fn body_field(
   let Some(name) = Identifier::parse(property.name.as_ref()) else {
     bail_policy!(
       reporter,
-      "invalid-form-field-name",
+      subcode::INVALID_FORM_FIELD_NAME,
       "body field '{name}' in {method} {path}: name is not a valid JavaScript identifier. Rename the field or split this body into a non-generated client.",
       name = property.name.as_ref(),
     );
@@ -224,125 +230,6 @@ fn body_field(
       body,
     )?,
   })
-}
-
-/// One body property's raw `format` hints: `own` from the property
-/// schema, `items` from its array-item schema.
-#[derive(Clone, Copy, Default)]
-struct RawPropertyFormat<'a> {
-  own: Option<&'a str>,
-  items: Option<&'a str>,
-}
-
-/// Collects the per-property `format` hints `SchemaType` does not carry.
-/// Empty when the body is a top-level `$ref`.
-fn collect_raw_property_formats(raw_schema: &Schema) -> BTreeMap<&str, RawPropertyFormat<'_>> {
-  raw_schema
-    .properties
-    .iter()
-    .flat_map(|properties| properties.iter())
-    .map(|(name, schema)| {
-      let format = RawPropertyFormat {
-        own: schema.format.as_deref(),
-        items: schema
-          .items
-          .as_deref()
-          .and_then(|item_schema| item_schema.format.as_deref()),
-      };
-      (name.as_str(), format)
-    })
-    .collect()
-}
-
-/// Classifies one form-body property. Accepts a scalar, a binary, or an
-/// array of either; every other shape fails with the matching [`Reject`].
-fn classify_body_field_type(
-  schema: &SchemaType,
-  raw_format: RawPropertyFormat<'_>,
-  field_name: &str,
-  body: FormBody<'_>,
-) -> Result<BodyFieldType, Diagnostic> {
-  match schema {
-    SchemaType::Scalar(SchemaScalar::String) if raw_format.own == Some(BINARY) => {
-      binary_field(BodyFieldType::Binary, "binary", field_name, body)
-    }
-    SchemaType::Array(inner)
-      if matches!(inner.as_ref(), SchemaType::Scalar(SchemaScalar::String))
-        && raw_format.items == Some(BINARY) =>
-    {
-      binary_field(
-        BodyFieldType::ArrayOfBinary,
-        "array-of-binary",
-        field_name,
-        body,
-      )
-    }
-    SchemaType::Scalar(scalar) => Ok(BodyFieldType::Scalar(scalar.clone())),
-    SchemaType::Array(inner) => match inner.as_ref() {
-      SchemaType::Scalar(scalar) => Ok(BodyFieldType::ArrayOfScalar(scalar.clone())),
-      _ => Err(reject_field(
-        Reject::ComposedField,
-        "array items must be scalar or binary.".to_string(),
-        field_name,
-        body,
-      )),
-    },
-    SchemaType::InlineObject { .. } | SchemaType::Ref(_) => Err(reject_field(
-      Reject::NestedObject,
-      format!(
-        "nested objects are not supported in {} bodies.",
-        body.kind.label()
-      ),
-      field_name,
-      body,
-    )),
-    _ => Err(reject_field(
-      Reject::ComposedField,
-      format!(
-        "composed schemas are not supported in {} bodies.",
-        body.kind.label()
-      ),
-      field_name,
-      body,
-    )),
-  }
-}
-
-/// A binary field, which only multipart can carry.
-fn binary_field(
-  carried: BodyFieldType,
-  label: &str,
-  field_name: &str,
-  body: FormBody<'_>,
-) -> Result<BodyFieldType, Diagnostic> {
-  match body.kind {
-    FormKind::Multipart => Ok(carried),
-    FormKind::UrlEncoded => Err(Diagnostic::policy_violation(
-      body.reporter,
-      URLENCODED_BINARY_FIELD,
-      format!(
-        "body field '{field_name}' in {} {}: {label} fields are not supported in {URL_ENCODED}.",
-        body.method, body.path
-      ),
-    )),
-  }
-}
-
-/// A rejected field, its `detail` appended to the field's position.
-fn reject_field(
-  reject: Reject,
-  detail: String,
-  field_name: &str,
-  body: FormBody<'_>,
-) -> Diagnostic {
-  Diagnostic::policy_violation(
-    body.reporter,
-    body.kind.subcode(reject),
-    format!(
-      "body field '{field_name}' in {} {}: {detail}",
-      body.method, body.path
-    ),
-  )
 }
 
 #[cfg(test)]

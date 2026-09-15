@@ -9,6 +9,7 @@ mod reference;
 #[cfg(test)]
 mod tests;
 
+use crate::subcode;
 use std::collections::{BTreeMap, HashSet};
 
 use crate::api_model::canonical::ModelSymbol;
@@ -195,7 +196,7 @@ fn warn_dropped_format(schema: &Schema, walk: SchemaWalk<'_>) {
   if let Some(format) = &schema.format {
     walk.reporter().warning(
       crate::error::DiagnosticCode::UnsupportedSemantic,
-      Some("format-dropped"),
+      Some(subcode::FORMAT_DROPPED),
       format!(
         "{} declares format '{format}', which is currently dropped — the generator emits the base type without format-specific narrowing.",
         walk.here()

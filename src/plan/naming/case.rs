@@ -3,6 +3,7 @@
 use crate::plan::naming::config::Case;
 
 /// Splits `name` into its casing tokens, each borrowed from `name`.
+#[must_use]
 pub(crate) const fn tokenize(name: &str) -> Tokens<'_> {
   Tokens { rest: name }
 }
@@ -24,6 +25,7 @@ impl<'a> Iterator for Tokens<'a> {
 }
 
 /// Byte length of the token at the start of `token`.
+#[must_use]
 fn token_len(token: &str) -> usize {
   let current = token.char_indices().skip(1);
   let previous = token.chars();
@@ -42,6 +44,7 @@ fn token_len(token: &str) -> usize {
 /// run of alphanumerics reaches at two case transitions: after a lowercase
 /// or digit (`listPets`), and at the last uppercase of a run followed by a
 /// lowercase (`URLPath`).
+#[must_use]
 fn splits_before(previous: char, current: char, following: Option<char>) -> bool {
   let starts_after_lower = previous.is_ascii_lowercase() || previous.is_ascii_digit();
   let ends_upper_run = previous.is_ascii_uppercase()
@@ -51,6 +54,7 @@ fn splits_before(previous: char, current: char, following: Option<char>) -> bool
 }
 
 /// Renders `name`'s tokens joined in the given case.
+#[must_use]
 pub(crate) fn apply(name: &str, case: Case) -> String {
   tokenize(name).enumerate().fold(
     String::with_capacity(name.len()),

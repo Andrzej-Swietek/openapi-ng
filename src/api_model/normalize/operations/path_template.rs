@@ -2,6 +2,7 @@
 
 use crate::error::{Diagnostic, Reporter, bail_policy};
 use crate::identifier::is_identifier;
+use crate::subcode;
 
 use super::super::bail_unsupported;
 
@@ -30,7 +31,7 @@ pub(super) fn validate_path_template(path: &str, reporter: &Reporter) -> Result<
     if !is_identifier(name) {
       bail_policy!(
         reporter,
-        "invalid-path-parameter-name",
+        subcode::INVALID_PATH_PARAMETER_NAME,
         "path template {path}: parameter name '{name}' is not a valid JavaScript identifier. Rename the parameter or split this path into a non-generated client."
       );
     }

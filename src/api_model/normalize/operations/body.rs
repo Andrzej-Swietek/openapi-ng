@@ -5,6 +5,7 @@ use crate::api_model::canonical::{BodyContent, BodyField, RequestBodyDef};
 use crate::api_model::schema::SchemaType;
 use crate::error::{Context, Diagnostic, bail_policy};
 use crate::parse::openapi_model::{MediaType, RequestBody};
+use crate::subcode;
 
 use super::super::schema::normalize_schema;
 use super::super::{SchemaWalk, bail_unsupported, unsupported};
@@ -22,7 +23,7 @@ pub(super) fn normalize_request_body(
   if body.content.len() > 1 {
     bail_policy!(
       context.reporter(),
-      "multi-content-body",
+      subcode::MULTI_CONTENT_BODY,
       "requestBody for {} {} must declare exactly one content type.",
       context.method(),
       context.path()
@@ -57,7 +58,7 @@ fn normalize_content(
     }
     other => bail_policy!(
       context.reporter(),
-      "unsupported-body-content-type",
+      subcode::UNSUPPORTED_BODY_CONTENT_TYPE,
       "requestBody for {} {}: unsupported content type {other:?}. Use {JSON}, {MULTIPART}, or {URL_ENCODED}.",
       context.method(),
       context.path()

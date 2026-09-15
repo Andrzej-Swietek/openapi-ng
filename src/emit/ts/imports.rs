@@ -18,10 +18,12 @@ pub(crate) struct Binding<'a> {
 }
 
 impl<'a> Binding<'a> {
+  #[must_use]
   pub(crate) const fn plain(name: &'a str) -> Self {
     Self { name, alias: None }
   }
 
+  #[must_use]
   const fn renamed(name: &'a str, alias: &'a str) -> Self {
     Self {
       name,
@@ -29,6 +31,7 @@ impl<'a> Binding<'a> {
     }
   }
 
+  #[must_use]
   fn width(self) -> usize {
     self.name.len() + self.alias.map_or(0, |alias| " as ".len() + alias.len())
   }
@@ -65,6 +68,7 @@ pub(crate) enum Statement {
 }
 
 impl Statement {
+  #[must_use]
   const fn open(self) -> &'static str {
     match self {
       Self::TypeImport => "import type { ",
@@ -72,6 +76,7 @@ impl Statement {
     }
   }
 
+  #[must_use]
   const fn open_wrapped(self) -> &'static str {
     match self {
       Self::TypeImport => "import type {\n",

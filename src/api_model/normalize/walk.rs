@@ -18,6 +18,7 @@ pub(crate) struct SchemaWalk<'a> {
 impl<'a> SchemaWalk<'a> {
   /// Starts a walk at a top-level schema, parameter, request body or
   /// response.
+  #[must_use]
   pub(crate) const fn root(context: Context<'a>, reporter: &'a Reporter) -> Self {
     Self {
       context,
@@ -27,6 +28,7 @@ impl<'a> SchemaWalk<'a> {
   }
 
   /// Descends into the named object property.
+  #[must_use]
   pub(crate) const fn property<'s>(&'s self, name: &'s str) -> SchemaWalk<'s> {
     self.descend(Context::Property {
       parent: &self.context,
@@ -35,6 +37,7 @@ impl<'a> SchemaWalk<'a> {
   }
 
   /// Descends into the 1-based member of a `oneOf` / `anyOf` / `allOf`.
+  #[must_use]
   pub(crate) const fn composition_member<'s>(&'s self, index: usize) -> SchemaWalk<'s> {
     self.descend(Context::CompositionMember {
       parent: &self.context,
@@ -43,6 +46,7 @@ impl<'a> SchemaWalk<'a> {
   }
 
   /// Descends into the `additionalProperties` sub-schema.
+  #[must_use]
   pub(crate) const fn additional_properties<'s>(&'s self) -> SchemaWalk<'s> {
     self.descend(Context::AdditionalProperties {
       parent: &self.context,
@@ -51,6 +55,7 @@ impl<'a> SchemaWalk<'a> {
 
   /// Descends into an array's item schema, which shares the array's
   /// breadcrumb.
+  #[must_use]
   pub(crate) const fn item(&self) -> Self {
     Self {
       context: self.context,
@@ -59,6 +64,7 @@ impl<'a> SchemaWalk<'a> {
     }
   }
 
+  #[must_use]
   const fn descend<'s>(&'s self, context: Context<'s>) -> SchemaWalk<'s> {
     SchemaWalk {
       context,
@@ -69,10 +75,12 @@ impl<'a> SchemaWalk<'a> {
 
   /// The breadcrumb for this position, for use in a diagnostic message.
   /// Allocates, so call it only while building one.
+  #[must_use]
   pub(crate) fn here(&self) -> String {
     self.context.render()
   }
 
+  #[must_use]
   pub(crate) const fn reporter(&self) -> &'a Reporter {
     self.reporter
   }

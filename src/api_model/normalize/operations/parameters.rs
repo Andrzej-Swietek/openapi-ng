@@ -3,6 +3,7 @@
 use crate::api_model::canonical::{HeaderDef, RequestInputDef, RequestInputSource};
 use crate::api_model::schema::SchemaType;
 use crate::error::{Diagnostic, DiagnosticCode};
+use crate::subcode;
 
 use super::super::schema::normalize_schema;
 use super::super::{SchemaWalk, bail_unsupported, unsupported};
@@ -34,7 +35,7 @@ impl Destination {
       "cookie" => {
         reporter.warning(
           DiagnosticCode::UnsupportedSemantic,
-          Some("unsupported-parameter-location"),
+          Some(subcode::UNSUPPORTED_PARAMETER_LOCATION),
           format!(
             "operationId '{operation_id}': parameter '{name}' uses location 'cookie', which is not supported in the generated service contract and will be omitted.",
           ),
@@ -60,6 +61,7 @@ enum UnsupportedShape {
 
 impl UnsupportedShape {
   /// The shape `schema` presents, or `None` when the position accepts it.
+  #[must_use]
   const fn of(schema: &SchemaType) -> Option<Self> {
     match schema {
       SchemaType::InlineObject { .. } => Some(Self::InlineObject),
@@ -68,6 +70,7 @@ impl UnsupportedShape {
     }
   }
 
+  #[must_use]
   const fn label(self) -> &'static str {
     match self {
       Self::InlineObject => "an inline object schema",
@@ -85,6 +88,7 @@ struct Parameter {
 }
 
 impl Parameter {
+  #[must_use]
   fn into_input(self, source: RequestInputSource) -> RequestInputDef {
     RequestInputDef {
       name: self.name,
@@ -94,6 +98,7 @@ impl Parameter {
     }
   }
 
+  #[must_use]
   fn into_header(self) -> HeaderDef {
     HeaderDef {
       name: self.name,

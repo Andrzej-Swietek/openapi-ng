@@ -11,6 +11,7 @@ mod parse;
 mod pipeline;
 pub mod plan;
 mod result;
+mod subcode;
 #[cfg(test)]
 mod test_support;
 

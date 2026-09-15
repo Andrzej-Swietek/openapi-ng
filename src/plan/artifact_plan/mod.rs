@@ -1,26 +1,18 @@
-use std::collections::BTreeMap;
+//! The shapes the emitters read: one plan per service, per operation and
+//! per request field.
 
-use crate::{
-  api_model::canonical::{
-    ApiModel, BodyFieldType, ErrorResponse, HttpMethod, ModelSymbol, ResponseContent,
-  },
-  api_model::schema::SchemaType,
-  error::{Diagnostic, DiagnosticCode, Reporter},
-  identifier::{Identifier, MethodName, TypeName},
-  options::MappedType,
-};
+mod collisions;
+mod resolve;
 
-use super::{
-  naming::{
-    error_interface_name, operation_file_stem, request_interface_name, service_class_name,
-    service_file_stem,
-  },
-  services::plan_request_contract,
-};
+use crate::api_model::canonical::{BodyFieldType, ErrorResponse, HttpMethod, ResponseContent};
+use crate::api_model::schema::SchemaType;
+use crate::identifier::{Identifier, MethodName, TypeName};
+use crate::options::MappedType;
+
+pub(crate) use resolve::{resolve_service_plans, validate_mapped_types_against_schemas};
 
 /// A [`MappedType`] whose `schema` was found in the IR, borrowed from the
-/// model symbol that matched. Only
-/// [`validate_mapped_types_against_schemas`] constructs one.
+/// model symbol that matched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ResolvedMappedType<'a> {
   pub(crate) schema: &'a str,
@@ -30,6 +22,7 @@ pub(crate) struct ResolvedMappedType<'a> {
 }
 
 impl<'a> ResolvedMappedType<'a> {
+  #[must_use]
   pub(crate) fn new(schema: &'a str, source: &MappedType) -> Self {
     Self {
       schema,
@@ -139,233 +132,6 @@ pub(crate) enum PlannedRequestBody<'model> {
   UrlEncoded {
     fields: Vec<PlannedFormField<'model>>,
   },
-}
-
-/// Resolves each mapped type against `model_symbols`, failing on the
-/// first `schema` the IR does not declare.
-pub(crate) fn validate_mapped_types_against_schemas<'model>(
-  model_symbols: &'model [ModelSymbol],
-  mapped_types: &[MappedType],
-  reporter: &Reporter,
-) -> Result<Vec<ResolvedMappedType<'model>>, Diagnostic> {
-  let by_name = model_symbols
-    .iter()
-    .map(|symbol| (symbol.name.as_ref(), symbol))
-    .collect::<BTreeMap<&str, &ModelSymbol>>();
-
-  mapped_types
-    .iter()
-    .map(|mapped_type| {
-      let symbol = by_name.get(mapped_type.schema.as_str()).ok_or_else(|| {
-        reporter.error(
-          DiagnosticCode::InvalidOption,
-          format!(
-            "Failed to resolve generation options: mapped schema {} does not exist in the IR.",
-            mapped_type.schema
-          ),
-        )
-      })?;
-      Ok(ResolvedMappedType::new(symbol.name.as_ref(), mapped_type))
-    })
-    .collect()
-}
-
-pub(crate) fn resolve_service_plans<'model>(
-  ir: &'model ApiModel,
-  resolver: &crate::plan::naming::NamingResolver,
-  reporter: &Reporter,
-  standalone: bool,
-) -> Result<Vec<ServicePlan<'model>>, Diagnostic> {
-  use super::services::group_operations;
-
-  let mut services = group_operations(&ir.operations, resolver, reporter)?
-    .into_iter()
-    .map(|(group_name, group)| {
-      let file_stem = group_file_stem(&group_name, reporter)?;
-      let mut operations = group
-        .into_iter()
-        .map(|(operation, method_name)| {
-          plan_operation(operation, method_name, &file_stem, standalone, reporter)
-        })
-        .collect::<Result<Vec<_>, Diagnostic>>()?;
-      operations.sort_by(|left, right| left.method_name.cmp(&right.method_name));
-
-      let operations_barrel_path = standalone.then(|| format!("rest/{file_stem}/index.ts"));
-      if let Some(barrel_path) = &operations_barrel_path {
-        reject_artifact_path_collisions(&group_name, barrel_path, &operations, reporter)?;
-      }
-
-      Ok(ServicePlan {
-        class_name: service_class_name(&group_name),
-        artifact_path: format!("rest/{file_stem}.rest.ts"),
-        operations_barrel_path,
-        group_name,
-        operations,
-      })
-    })
-    .collect::<Result<Vec<_>, Diagnostic>>()?;
-  services.sort_by(|left, right| left.class_name.cmp(&right.class_name));
-  reject_cross_group_path_collisions(&services, reporter)?;
-
-  Ok(services)
-}
-
-fn plan_operation<'model>(
-  operation: &'model crate::api_model::canonical::OperationDef,
-  method_name: MethodName,
-  file_stem: &str,
-  standalone: bool,
-  reporter: &Reporter,
-) -> Result<PlannedOperation<'model>, Diagnostic> {
-  let request = plan_request_contract(operation, reporter)?;
-  Ok(PlannedOperation {
-    operation_id: operation.operation_id.clone(),
-    request_interface: takes_input(&request).then(|| request_interface_name(&method_name)),
-    error_interface: (!operation.errors.is_empty()).then(|| error_interface_name(&method_name)),
-    artifact_path: standalone
-      .then(|| operation_artifact_path(operation, &method_name, file_stem, reporter))
-      .transpose()?,
-    method_name,
-    method: operation.method,
-    path: operation.path.clone(),
-    request,
-    response: operation.response.as_ref(),
-    errors: operation.errors.as_slice(),
-    description: operation.description.clone(),
-    deprecated: operation.deprecated,
-  })
-}
-
-/// Kebab-case stem for a group's files, rejecting a name that leaves none:
-/// the paths built from it would carry an empty segment.
-fn group_file_stem(group_name: &str, reporter: &Reporter) -> Result<String, Diagnostic> {
-  let stem = service_file_stem(group_name);
-  if stem.is_empty() {
-    return Err(Diagnostic::policy_violation(
-      reporter,
-      "naming-resolution",
-      format!(
-        "group '{group_name}' has no letters or digits, so it cannot name a service file. Adjust naming.group."
-      ),
-    ));
-  }
-  Ok(stem)
-}
-
-/// `rest/<group>/<method>.ts`, rejecting a method name the barrel cannot
-/// re-export or that names no file.
-fn operation_artifact_path(
-  operation: &crate::api_model::canonical::OperationDef,
-  method_name: &MethodName,
-  file_stem: &str,
-  reporter: &Reporter,
-) -> Result<String, Diagnostic> {
-  if method_name.as_str() == "default" {
-    return Err(Diagnostic::policy_violation(
-      reporter,
-      "reserved-identifier",
-      format!(
-        "methodName 'default' for operation {} {} (operationId={}) cannot be a standalone operation: the barrel would expose it as `ops.default`. Adjust naming.methodName or use layout 'services'.",
-        operation.method, operation.path, operation.operation_id,
-      ),
-    ));
-  }
-  let stem = operation_file_stem(method_name.as_str());
-  if stem.is_empty() {
-    return Err(Diagnostic::policy_violation(
-      reporter,
-      "naming-resolution",
-      format!(
-        "methodName '{method_name}' for operation {} {} (operationId={}) has no letters or digits, so it cannot name a standalone operation file. Adjust naming.methodName or use layout 'services'.",
-        operation.method, operation.path, operation.operation_id,
-      ),
-    ));
-  }
-  Ok(format!("rest/{file_stem}/{stem}.ts"))
-}
-
-/// True when the operation declares any path, query, header or body
-/// input.
-const fn takes_input(request: &PlannedRequestContract<'_>) -> bool {
-  !request.fields.is_empty() || request.body.is_some() || !request.headers.is_empty()
-}
-
-// Group names differing only in case or separators share a kebab file stem,
-// so one group's files would overwrite the other's.
-fn reject_cross_group_path_collisions(
-  services: &[ServicePlan<'_>],
-  reporter: &Reporter,
-) -> Result<(), Diagnostic> {
-  let mut owners: BTreeMap<&str, &str> = BTreeMap::new();
-  for service in services {
-    let paths = std::iter::once(service.artifact_path.as_str())
-      .chain(service.operations_barrel_path.as_deref())
-      .chain(
-        service
-          .operations
-          .iter()
-          .filter_map(|operation| operation.artifact_path.as_deref()),
-      );
-    for path in paths {
-      if let Some(previous) = owners.insert(path, &service.group_name) {
-        return Err(Diagnostic::policy_violation(
-          reporter,
-          "naming-resolution",
-          format!(
-            "groups '{previous}' and '{}' both map to the file {path}; adjust naming.group so the file names differ.",
-            service.group_name,
-          ),
-        ));
-      }
-    }
-  }
-  Ok(())
-}
-
-// Operation files are named after kebab-cased method names, so distinct
-// method names can still share a file, and the barrel is a fixed file in
-// the same directory.
-fn reject_artifact_path_collisions(
-  group_name: &str,
-  barrel_path: &str,
-  operations: &[PlannedOperation<'_>],
-  reporter: &Reporter,
-) -> Result<(), Diagnostic> {
-  let mut by_path: BTreeMap<&str, &PlannedOperation<'_>> = BTreeMap::new();
-  for operation in operations {
-    let path = operation
-      .artifact_path
-      .as_deref()
-      .expect("standalone operations carry an artifact path");
-    if path == barrel_path {
-      return Err(Diagnostic::policy_violation(
-        reporter,
-        "reserved-identifier",
-        format!(
-          "methodName '{}' for operation {} {} (operationId={}) cannot be a standalone operation: its file {path} is the barrel of group '{group_name}'. Adjust naming.methodName or use layout 'services'.",
-          operation.method_name, operation.method, operation.path, operation.operation_id,
-        ),
-      ));
-    }
-    if let Some(previous) = by_path.insert(path, operation) {
-      return Err(Diagnostic::policy_violation(
-        reporter,
-        "naming-resolution",
-        format!(
-          "methodNames '{}' ({} {}, operationId={}) and '{}' ({} {}, operationId={}) in group '{group_name}' both map to the file {path}; adjust naming.methodName so the file names differ.",
-          previous.method_name,
-          previous.method,
-          previous.path,
-          previous.operation_id,
-          operation.method_name,
-          operation.method,
-          operation.path,
-          operation.operation_id,
-        ),
-      ));
-    }
-  }
-  Ok(())
 }
 
 #[cfg(test)]
@@ -1036,8 +802,13 @@ mod tests {
       ));
     }
     let ctx = test_reporter();
-    let err = super::reject_artifact_path_collisions("pet", "rest/pet/index.ts", &operations, &ctx)
-      .expect_err("two operation files at one path");
+    let err = super::collisions::reject_artifact_path_collisions(
+      "pet",
+      "rest/pet/index.ts",
+      &operations,
+      &ctx,
+    )
+    .expect_err("two operation files at one path");
     assert!(
       err
         .message

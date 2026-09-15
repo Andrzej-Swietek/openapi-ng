@@ -74,6 +74,7 @@ const RESERVED_IDENTIFIERS: &[&str] = &[
 
 /// One standalone operation file: the `defineOperation(...)` constant
 /// followed by its `{Pascal}Params` / `{Pascal}Error` interfaces.
+#[must_use]
 pub(crate) fn emit_operation(operation: &PlannedOperation<'_>) -> String {
   let operations = std::slice::from_ref(operation);
   let helper_symbols: &[&str] = if uses_http_params(operations) {
@@ -136,6 +137,7 @@ pub(crate) fn emit_operation(operation: &PlannedOperation<'_>) -> String {
   buffer.into_string()
 }
 
+#[must_use]
 fn needs_alias(name: &str, helper_symbols: &[&str], model_imports: &BTreeSet<&str>) -> bool {
   RESERVED_IDENTIFIERS.contains(&name)
     || helper_symbols.contains(&name)
@@ -145,6 +147,7 @@ fn needs_alias(name: &str, helper_symbols: &[&str], model_imports: &BTreeSet<&st
 /// `rest/<group>/index.ts`: re-exports every operation file in its
 /// directory so a namespace import of the barrel keeps only the members
 /// it touches.
+#[must_use]
 pub(crate) fn emit_operations_barrel(service_plan: &ServicePlan<'_>) -> String {
   let mut buffer = Writer::with_capacity(service_plan.operations.len() * 48 + 16);
   for operation in &service_plan.operations {

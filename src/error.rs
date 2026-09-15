@@ -28,6 +28,7 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
+  #[must_use]
   pub const fn as_str(self) -> &'static str {
     match self {
       Self::InputInvalid => "E_INPUT_INVALID",
@@ -52,6 +53,7 @@ pub struct Diagnostic {
 }
 
 impl Diagnostic {
+  #[must_use]
   pub(crate) fn new(code: DiagnosticCode, message: impl Into<String>, path: Rc<str>) -> Self {
     Self {
       code,
@@ -61,6 +63,7 @@ impl Diagnostic {
     }
   }
 
+  #[must_use]
   pub(crate) fn policy_violation(
     reporter: &Reporter,
     subcode: &'static str,
@@ -71,14 +74,17 @@ impl Diagnostic {
     diagnostic
   }
 
+  #[must_use]
   pub(crate) fn to_napi_warning(&self) -> GeneratorDiagnostic {
     self.to_napi(SEVERITY_WARNING)
   }
 
+  #[must_use]
   pub(crate) fn to_napi_error(&self) -> GeneratorDiagnostic {
     self.to_napi(SEVERITY_ERROR)
   }
 
+  #[must_use]
   fn to_napi(&self, severity: &'static str) -> GeneratorDiagnostic {
     GeneratorDiagnostic {
       code: self.code.as_str().to_string(),
@@ -142,6 +148,7 @@ pub(crate) enum Context<'a> {
 
 impl<'a> Context<'a> {
   /// Renders the full chain. Allocates.
+  #[must_use]
   pub(crate) fn render(&self) -> String {
     match self {
       Context::Schema(name) => format!("schema {name}"),
@@ -169,6 +176,7 @@ pub(crate) struct Reporter {
 }
 
 impl Reporter {
+  #[must_use]
   pub(crate) const fn new(path: Rc<str>) -> Self {
     Self {
       path,
@@ -177,6 +185,7 @@ impl Reporter {
   }
 
   /// Builds a fatal diagnostic without recording it.
+  #[must_use]
   pub(crate) fn error(&self, code: DiagnosticCode, message: impl Into<String>) -> Diagnostic {
     Diagnostic::new(code, message, Rc::clone(&self.path))
   }
@@ -194,6 +203,7 @@ impl Reporter {
     self.warnings.borrow_mut().push(diagnostic);
   }
 
+  #[must_use]
   pub(crate) fn into_warnings(self) -> Vec<Diagnostic> {
     self.warnings.into_inner()
   }
@@ -223,6 +233,7 @@ pub(crate) use {bail, bail_policy};
 
 #[cfg(test)]
 mod tests {
+  use crate::subcode;
   use serde_json::json;
 
   use super::{Diagnostic, DiagnosticCode, Reporter};
@@ -271,7 +282,7 @@ mod tests {
     let ctx = crate::test_support::test_reporter();
     let diagnostic = Diagnostic::policy_violation(
       &ctx,
-      "missing-tag",
+      subcode::MISSING_TAG,
       "Failed to plan services: operation missing tag.",
     );
 

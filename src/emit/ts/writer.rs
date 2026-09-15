@@ -12,6 +12,7 @@ pub(crate) struct Writer {
 }
 
 impl Writer {
+  #[must_use]
   pub(crate) fn with_capacity(capacity: usize) -> Self {
     Self {
       buf: String::with_capacity(capacity),
@@ -147,6 +148,7 @@ impl Writer {
     self.indent_cache.truncate(self.indent_level * 2);
   }
 
+  #[must_use]
   pub(crate) fn into_string(self) -> String {
     self.buf
   }

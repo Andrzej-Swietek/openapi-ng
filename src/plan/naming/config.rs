@@ -42,6 +42,7 @@ pub(crate) enum Case {
 }
 
 impl Case {
+  #[must_use]
   pub(crate) fn parse(value: &str) -> Option<Self> {
     match value {
       "camel" => Some(Self::Camel),
@@ -56,6 +57,7 @@ impl Case {
 
 impl Case {
   /// Text inserted between adjacent tokens.
+  #[must_use]
   pub(crate) const fn separator(self) -> &'static str {
     match self {
       Self::Camel | Self::Pascal => "",

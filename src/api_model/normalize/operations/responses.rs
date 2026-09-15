@@ -101,6 +101,7 @@ pub(super) fn normalize_error_responses(
 
 /// Parses a response key as a 4xx or 5xx HTTP status code. Returns `None`
 /// for 2xx, 1xx, 3xx, the `default` key, and malformed values.
+#[must_use]
 fn parse_error_status(status: &str) -> Option<u16> {
   if status.len() != 3 {
     return None;
@@ -116,6 +117,7 @@ fn parse_error_status(status: &str) -> Option<u16> {
 /// does not classify as `Blob`, else the first `Blob`.
 ///
 /// Determinism comes from `BTreeMap` iterating alphabetically by key.
+#[must_use]
 fn pick_response_media<'a>(
   content: &'a BTreeMap<String, MediaType>,
   user_mapping: &[ResponseTypeMapping],
@@ -133,6 +135,7 @@ fn pick_response_media<'a>(
   first_blob
 }
 
+#[must_use]
 fn is_success_status(status: &str) -> bool {
   status.starts_with('2')
 }
@@ -145,6 +148,7 @@ enum ResponseKind {
   ArrayBuffer,
 }
 
+#[must_use]
 fn classify_response_kind(
   content_type: &str,
   user_mapping: &[ResponseTypeMapping],

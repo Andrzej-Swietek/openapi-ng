@@ -8,10 +8,12 @@ pub(crate) struct Identifier(Box<str>);
 impl Identifier {
   /// Returns `None` when `name` is not a bare identifier — digits-first,
   /// kebab-case, dotted, empty, or whitespace-bearing names all reject.
+  #[must_use]
   pub(crate) fn parse(name: &str) -> Option<Self> {
     is_identifier(name).then(|| Self(Box::from(name)))
   }
 
+  #[must_use]
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
@@ -25,6 +27,7 @@ impl std::fmt::Display for Identifier {
 
 /// True when `name` is a bare identifier. Prefer [`Identifier::parse`] where
 /// the validated name is kept.
+#[must_use]
 pub(crate) fn is_identifier(name: &str) -> bool {
   let mut chars = name.chars();
   chars
@@ -41,10 +44,12 @@ pub(crate) fn is_identifier(name: &str) -> bool {
 pub(crate) struct MethodName(String);
 
 impl MethodName {
+  #[must_use]
   pub(crate) const fn new(name: String) -> Self {
     Self(name)
   }
 
+  #[must_use]
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }
@@ -62,10 +67,12 @@ impl std::fmt::Display for MethodName {
 pub(crate) struct TypeName(String);
 
 impl TypeName {
+  #[must_use]
   pub(crate) const fn new(name: String) -> Self {
     Self(name)
   }
 
+  #[must_use]
   pub(crate) fn as_str(&self) -> &str {
     &self.0
   }

@@ -45,6 +45,7 @@ pub(super) struct LoweringContext<'a> {
 }
 
 impl<'a> LoweringContext<'a> {
+  #[must_use]
   pub(super) const fn new(
     method: &'a str,
     path: &'a str,
@@ -61,22 +62,27 @@ impl<'a> LoweringContext<'a> {
     }
   }
 
+  #[must_use]
   pub(super) const fn method(&self) -> &'a str {
     self.method
   }
 
+  #[must_use]
   pub(super) const fn path(&self) -> &'a str {
     self.path
   }
 
+  #[must_use]
   pub(super) const fn schemas(&self) -> &'a BTreeMap<&'a str, &'a SchemaType> {
     self.schemas
   }
 
+  #[must_use]
   pub(super) const fn response_types(&self) -> &'a [ResponseTypeMapping] {
     self.response_types
   }
 
+  #[must_use]
   pub(super) const fn reporter(&self) -> &'a Reporter {
     self.reporter
   }
@@ -134,6 +140,7 @@ fn normalize_operation(
   })
 }
 
+#[must_use]
 fn unsupported_method_detail(declared_method: &str, path: &str) -> String {
   if declared_method == "trace" {
     format!(
@@ -157,6 +164,7 @@ fn normalize_request(
   })
 }
 
+#[must_use]
 pub(super) fn request_input_sort_key(value: &RequestInputDef) -> (u8, &str) {
   let weight = match value.source {
     RequestInputSource::Path => 0,

@@ -14,7 +14,7 @@ use crate::{
     render_generated_banner,
   },
   error::{Diagnostic, Reporter},
-  options::{GenerateConfig, validate_generate_config},
+  options::{GenerateConfig, resolve_generate_config},
   plan::plan_generation,
   result::{GenerateSummary, GeneratedArtifact},
 };
@@ -96,11 +96,11 @@ pub fn execute_generate(config: GenerateConfig) -> Result<GenerateResult, Genera
 }
 
 fn run_pipeline(
-  mut config: GenerateConfig,
+  config: GenerateConfig,
   display_path: Rc<str>,
   reporter: &Reporter,
 ) -> Result<(GenerateSummary, Vec<GeneratedArtifact>), Diagnostic> {
-  validate_generate_config(&mut config, reporter)?;
+  let config = resolve_generate_config(config, reporter)?;
   let ir = build_ir(&config, &display_path, reporter)?;
   let summary = GenerateSummary::from_ir(display_path.as_ref().to_string(), &ir);
 

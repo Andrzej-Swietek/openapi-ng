@@ -96,6 +96,7 @@ fn evaluate_rule(rule: &Rule, ctx: &OperationContext<'_>) -> Result<String, Rule
   Ok(final_value)
 }
 
+#[must_use]
 fn map_template_error(err: TemplateError) -> RuleFailure {
   match err {
     TemplateError::Unbound(name) => RuleFailure::Unbound(name),

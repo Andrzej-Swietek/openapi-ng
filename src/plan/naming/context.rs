@@ -21,6 +21,7 @@ pub(crate) struct OperationContext<'a> {
 }
 
 impl<'a> OperationContext<'a> {
+  #[must_use]
   pub(crate) fn from_operation(operation: &'a OperationDef) -> Self {
     Self {
       operation_id: Some(operation.operation_id.as_str()).filter(|id| !id.is_empty()),
@@ -34,6 +35,7 @@ impl<'a> OperationContext<'a> {
 
   /// Looks up a bare field name. `None` means unbound, which the caller
   /// turns into a rule failure.
+  #[must_use]
   pub(crate) fn lookup(&self, name: &str) -> Option<&str> {
     match name {
       "operationId" => self.operation_id,
@@ -46,6 +48,7 @@ impl<'a> OperationContext<'a> {
 
   /// Looks up an array element: `pathSegments[0]`, `tags[-1]`. A negative
   /// index counts from the tail; out of bounds is unbound.
+  #[must_use]
   pub(crate) fn lookup_indexed(&self, array: &str, index: i32) -> Option<&str> {
     match array {
       "pathSegments" => element(&self.path_segments, index).copied(),
@@ -55,24 +58,29 @@ impl<'a> OperationContext<'a> {
   }
 
   /// Path segments joined with `_`, for the default method name.
+  #[must_use]
   pub(crate) fn path_segments_joined(&self) -> String {
     self.path_segments.join("_")
   }
 
+  #[must_use]
   pub(crate) const fn tags(&self) -> &'a [String] {
     self.tags
   }
 
+  #[must_use]
   pub(crate) const fn method(&self) -> &'static str {
     self.method
   }
 
+  #[must_use]
   pub(crate) const fn operation_id(&self) -> Option<&'a str> {
     self.operation_id
   }
 }
 
 /// Resolves a possibly-negative index against `items`.
+#[must_use]
 fn element<T>(items: &[T], index: i32) -> Option<&T> {
   if index >= 0 {
     return items.get(usize::try_from(index).ok()?);
@@ -84,6 +92,7 @@ fn element<T>(items: &[T], index: i32) -> Option<&T> {
     .and_then(|i| items.get(i))
 }
 
+#[must_use]
 fn clean_path_segments(path: &str) -> Vec<&str> {
   path
     .split('/')

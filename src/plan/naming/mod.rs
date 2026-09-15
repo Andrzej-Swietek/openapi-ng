@@ -20,6 +20,7 @@ pub(crate) use fixed::{
 };
 pub(crate) use lower::lower;
 
+use crate::subcode;
 use crate::{
   api_model::canonical::OperationDef,
   error::{Diagnostic, Reporter},
@@ -37,6 +38,7 @@ pub(crate) struct NamingResolver {
 }
 
 impl NamingResolver {
+  #[must_use]
   pub(crate) const fn new(config: NamingConfig) -> Self {
     Self { config }
   }
@@ -52,7 +54,7 @@ impl NamingResolver {
         default_method_name(&ctx).map_err(|_| {
           Diagnostic::policy_violation(
             reporter,
-            "naming-resolution",
+            subcode::NAMING_RESOLUTION,
             format!(
               "Could not derive a default methodName for operation {} {} (no operationId, and path produced no segments).",
               operation.method, operation.path,
@@ -85,6 +87,7 @@ impl NamingResolver {
   }
 }
 
+#[must_use]
 fn naming_resolution_error(
   reporter: &Reporter,
   key: &str,
@@ -99,7 +102,7 @@ fn naming_resolution_error(
     .join("\n");
   Diagnostic::policy_violation(
     reporter,
-    "naming-resolution",
+    subcode::NAMING_RESOLUTION,
     format!(
       "Failed to resolve `{}` for operation {} {} (operationId={}). All rules in the fallback chain failed:\n{}",
       key, operation.method, operation.path, operation.operation_id, formatted,
@@ -107,6 +110,7 @@ fn naming_resolution_error(
   )
 }
 
+#[must_use]
 fn format_failure(failure: &RuleFailure) -> String {
   match failure {
     RuleFailure::EmptyFromWithParse => {

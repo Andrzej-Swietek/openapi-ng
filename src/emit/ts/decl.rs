@@ -19,6 +19,7 @@ pub(crate) struct Doc<'a> {
 }
 
 impl<'a> Doc<'a> {
+  #[must_use]
   pub(crate) const fn new(description: Option<&'a str>, deprecated: bool) -> Self {
     Self {
       description,
@@ -27,6 +28,7 @@ impl<'a> Doc<'a> {
   }
 
   /// Prose with trailing whitespace trimmed, or `None` when it is empty.
+  #[must_use]
   fn prose(self) -> Option<&'a str> {
     self
       .description
@@ -34,6 +36,7 @@ impl<'a> Doc<'a> {
       .filter(|text| !text.is_empty())
   }
 
+  #[must_use]
   pub(crate) fn is_empty(self) -> bool {
     self.prose().is_none() && !self.deprecated
   }

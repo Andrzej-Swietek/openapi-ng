@@ -12,6 +12,7 @@ use crate::{
   plan::artifact_plan::ResolvedMappedType,
 };
 
+#[must_use]
 pub(crate) fn emit_model(
   symbols: &[ModelSymbol],
   mapped_types: &[ResolvedMappedType<'_>],
@@ -78,6 +79,7 @@ fn emit_symbol(symbol: &ModelSymbol, out: &mut Writer) {
   }
 }
 
+#[must_use]
 fn member(property: &SchemaProperty) -> Member<'_> {
   Member {
     name: property.name.as_ref(),
@@ -88,6 +90,7 @@ fn member(property: &SchemaProperty) -> Member<'_> {
 }
 
 /// The name a mapped type introduces into the file.
+#[must_use]
 fn native_binding<'a>(mapped: &'a ResolvedMappedType<'_>) -> &'a str {
   mapped
     .alias
@@ -99,6 +102,7 @@ fn native_binding<'a>(mapped: &'a ResolvedMappedType<'_>) -> &'a str {
 /// schema name it replaces. The usual `import type { Y as X }` plus
 /// `export type X = X;` would collide on `X`, so the pair collapses to a
 /// single re-export.
+#[must_use]
 fn is_self_alias(mapped: &ResolvedMappedType<'_>) -> bool {
   native_binding(mapped) == mapped.schema
 }

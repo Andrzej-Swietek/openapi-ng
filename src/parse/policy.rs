@@ -1,3 +1,4 @@
+use crate::subcode;
 use std::collections::BTreeMap;
 
 use crate::{
@@ -38,7 +39,7 @@ fn check_schema_cap(document: &OpenApiDocument, reporter: &Reporter) -> Result<(
   if schema_count > cap_schemas {
     bail_policy!(
       reporter,
-      "schema-cap-exceeded",
+      subcode::SCHEMA_CAP_EXCEEDED,
       "Failed to plan services: OpenAPI document declares {schema_count} schemas under components.schemas; \
          the per-document cap is {cap_schemas}. Set OPENAPI_NG_MAX_SCHEMAS to override.",
     );
@@ -56,7 +57,7 @@ fn check_operation_cap(document: &OpenApiDocument, reporter: &Reporter) -> Resul
   if operation_count > cap_operations {
     bail_policy!(
       reporter,
-      "operation-cap-exceeded",
+      subcode::OPERATION_CAP_EXCEEDED,
       "Failed to plan services: OpenAPI document declares {operation_count} operations across paths; \
          the per-document cap is {cap_operations}. Set OPENAPI_NG_MAX_OPERATIONS to override.",
     );
@@ -82,7 +83,7 @@ fn check_operation_ids_are_unique(
       let Some(operation_id) = operation.operation_id.as_deref() else {
         bail_policy!(
           reporter,
-          "missing-operation-id",
+          subcode::MISSING_OPERATION_ID,
           "Failed to plan services: operation {} {} must define operationId when service generation is enabled.",
           method.to_ascii_uppercase(),
           path
@@ -105,7 +106,7 @@ fn claim_operation_id<'a>(
   if let Some(&(first_method, first_path)) = declared.get(operation_id) {
     bail_policy!(
       reporter,
-      "duplicate-operation-id",
+      subcode::DUPLICATE_OPERATION_ID,
       "Failed to plan services: operationId '{}' is defined on both {} {} and {} {}. \
          operationIds must be globally unique.",
       operation_id,

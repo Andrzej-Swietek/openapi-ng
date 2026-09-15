@@ -138,6 +138,7 @@ pub struct GenerateOutcome {
 /// Projects a `catch_unwind` payload into the shape a typed fatal
 /// produces. A payload that is neither `&'static str` nor `String`
 /// collapses to a generic message.
+#[must_use]
 pub(crate) fn map_panic(panic: Box<dyn std::any::Any + Send>) -> GenerateErrorPayload {
   let message = panic
     .downcast_ref::<&'static str>()
@@ -156,6 +157,7 @@ pub(crate) fn map_panic(panic: Box<dyn std::any::Any + Send>) -> GenerateErrorPa
   })
 }
 
+#[must_use]
 pub(crate) fn map_failure(failure: GenerateFailure) -> GenerateErrorPayload {
   let GenerateFailure { warnings, fatal } = failure;
   let fatal = fatal.to_napi_error();
@@ -191,6 +193,7 @@ impl From<GenerateOptions> for GenerateConfig {
   }
 }
 
+#[must_use]
 pub(crate) fn map_generate_result(value: ApplicationGenerateResult) -> GenerateResult {
   GenerateResult {
     summary: value.summary,

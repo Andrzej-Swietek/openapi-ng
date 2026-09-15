@@ -20,6 +20,7 @@ pub struct GenerateSummary {
 impl GenerateSummary {
   /// Builds a summary whose counts come from the IR, and so describe what
   /// the generator emits rather than what the document declared.
+  #[must_use]
   pub(crate) fn from_ir(normalized_source_path: String, ir: &ApiModel) -> Self {
     // One path carries an operation per method, so the list repeats.
     let mut paths: Vec<&str> = ir
@@ -44,6 +45,7 @@ impl GenerateSummary {
 
 const U32_MAX_AS_USIZE: usize = u32::MAX as usize;
 
+#[must_use]
 fn clamp_count(count: usize) -> u32 {
   debug_assert!(
     count <= U32_MAX_AS_USIZE,
@@ -62,6 +64,7 @@ pub struct GeneratedArtifact {
 }
 
 impl GeneratedArtifact {
+  #[must_use]
   pub(crate) const fn new(path: String, contents: String) -> Self {
     Self { path, contents }
   }

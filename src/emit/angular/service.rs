@@ -10,6 +10,7 @@ use super::request::{
   render_zero_arg_builder,
 };
 
+#[must_use]
 pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
   // Each operation produces ~512 bytes (request interface + factory
   // triplet + URL/body construction); 2KB floor covers the @Injectable
@@ -63,6 +64,7 @@ pub(crate) fn emit_service(service_plan: &ServicePlan<'_>) -> String {
 /// Class for the `services` + `operations` layout: one `withInjector()` line per operation, plus type
 /// re-exports so `import type { ListPetsParams } from './rest/pet.rest'`
 /// resolves the same way it does under `services`.
+#[must_use]
 pub(crate) fn emit_bound_service(service_plan: &ServicePlan<'_>) -> String {
   // The barrel `rest/<group>/index.ts` is imported by its directory.
   let specifier = format!("./{}", service_file_stem(&service_plan.group_name));

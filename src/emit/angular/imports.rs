@@ -28,6 +28,7 @@ pub(super) fn render_service_imports(
   );
 }
 
+#[must_use]
 pub(super) fn uses_http_params(operations: &[PlannedOperation<'_>]) -> bool {
   operations.iter().any(|operation| {
     operation
@@ -49,6 +50,7 @@ pub(super) fn write_model_imports(buffer: &mut Writer, imports: &BTreeSet<&str>,
 }
 
 /// Every user-declared schema name the operations reference, sorted.
+#[must_use]
 pub(super) fn collect_model_type_imports<'a>(
   operations: &'a [PlannedOperation<'a>],
 ) -> BTreeSet<&'a str> {

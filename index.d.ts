@@ -187,10 +187,8 @@ export declare const ResponseType: {
 };
 
 /**
- * Overrides the response kind decoded for one content type.
- *
- * `content_type` is matched case-insensitively against the media type
- * the spec declares.
+ * Overrides the decoded response kind for one content type, matched
+ * case-insensitively against the media type the spec declares.
  */
 export interface ResponseTypeMapping {
   contentType: string
@@ -239,6 +237,10 @@ export type DiagnosticSubcode =
   | 'missing-tag'
   | 'field-collision'
   | 'missing-discriminator-property'
+  | 'discriminator-property-must-be-string'
+  | 'invalid-form-field-name'
+  | 'invalid-path-parameter-name'
+  | 'missing-body-schema'
   | 'unsupported-parameter-location'
   | 'duplicate-operation-id'
   | 'duplicate-schema-name'

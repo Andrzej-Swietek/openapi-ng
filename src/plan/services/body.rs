@@ -1,5 +1,6 @@
 //! Request-body layout.
 
+use crate::subcode;
 use crate::{
   api_model::{
     canonical::{BodyContent, BodyField, RequestBodyDef},
@@ -18,6 +19,7 @@ use crate::{
 /// - any other JSON shape → `Nested`, under one `body` key;
 /// - a form body → `Multipart` / `UrlEncoded`, its fields hoisted and
 ///   sorted by name.
+#[must_use]
 pub(super) fn plan_request_body<'model>(
   body: Option<&'model RequestBodyDef>,
 ) -> Option<PlannedRequestBody<'model>> {
@@ -52,6 +54,7 @@ pub(super) fn plan_request_body<'model>(
   }
 }
 
+#[must_use]
 fn plan_form_fields<'model>(fields: &'model [BodyField]) -> Vec<PlannedFormField<'model>> {
   let mut out: Vec<PlannedFormField<'model>> = fields
     .iter()
@@ -99,7 +102,7 @@ pub(super) fn check_body_field_collisions(
   let names = colliding.join(", ");
   Err(Diagnostic::policy_violation(
     reporter,
-    "field-collision",
+    subcode::FIELD_COLLISION,
     format!(
       "operationId '{operation_id}': body fields [{names}] duplicate path/query parameter names. \
        Rename the colliding fields in the OpenAPI spec, or hoist the body schema to a named `$ref` so it nests under `body`."

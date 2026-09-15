@@ -91,6 +91,7 @@ pub(crate) enum HttpMethod {
 }
 
 impl HttpMethod {
+  #[must_use]
   pub(crate) const fn as_str(self) -> &'static str {
     match self {
       Self::Get => "GET",
@@ -104,6 +105,7 @@ impl HttpMethod {
   }
 
   /// The lower-case name, as an OpenAPI path item spells it.
+  #[must_use]
   pub(crate) const fn as_lowercase(self) -> &'static str {
     match self {
       Self::Get => "get",
@@ -116,6 +118,7 @@ impl HttpMethod {
     }
   }
 
+  #[must_use]
   pub(crate) fn from_lowercase(value: &str) -> Option<Self> {
     match value {
       "get" => Some(Self::Get),
