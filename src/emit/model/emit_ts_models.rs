@@ -98,7 +98,9 @@ fn native_binding<'a>(mapped: &'a ResolvedMappedType<'_>) -> &'a str {
     .unwrap_or_else(|| mapped.type_name.as_ref())
 }
 
-/// True when the binding a mapped type introduces already equals the schema name it replaces.
+/// True when the binding a mapped type introduces already equals the schema
+/// name it replaces, where `import type { Y as X }` plus `export type X = X;`
+/// would collide on `X`.
 #[must_use]
 fn is_self_alias(mapped: &ResolvedMappedType<'_>) -> bool {
   native_binding(mapped) == mapped.schema

@@ -292,6 +292,27 @@ components:
   }
 
   #[test]
+  fn a_duplicate_below_components_schemas_is_not_a_duplicate_schema_name() {
+    let yaml = r#"openapi: 3.0.3
+info: { title: T, version: "1" }
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id: { type: string }
+        id: { type: string }
+"#;
+    let path = PathBuf::from("nested.yaml");
+    let display: Rc<str> = Rc::from("nested.yaml");
+    let err = decode_openapi_input(&path, yaml, &display)
+      .expect_err("a repeated property key is still a decode failure");
+    assert_eq!(err.code, DiagnosticCode::InputInvalid);
+    assert_eq!(err.subcode, None, "message: {}", err.message);
+  }
+
+  #[test]
   fn rejects_input_larger_than_cap() {
     let nanos = SystemTime::now()
       .duration_since(UNIX_EPOCH)

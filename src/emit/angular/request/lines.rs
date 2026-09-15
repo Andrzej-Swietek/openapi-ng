@@ -92,6 +92,8 @@ pub(super) fn write_form_body(
 }
 
 /// Writes `path`, expanding each `{name}` to `${encodeURIComponent(name)}`.
+/// An unmatched `{` emits the remainder verbatim, so adversarial IR yields
+/// wrong output instead of a panic across the NAPI boundary.
 pub(super) fn write_path_template_into(buffer: &mut Writer, path: &str) {
   let mut rest = path;
   while let Some(open) = rest.find('{') {
